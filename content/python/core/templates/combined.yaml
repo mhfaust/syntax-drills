@@ -1,0 +1,172 @@
+# Templates that combine skills. They are only offered at the compose level, once every
+# skill involved has been learned.
+
+- id: combo-months-dictcomp
+  skills: [zip, dict-comp]
+  level: 2
+  prompt: 'Using a dict comprehension with `zip`, map each month in `months` to its total in `totals`.'
+  generate: |
+    L = labels(rng, n=rng.randint(3, 6), kinds=['month'])
+    totals = ints(rng, len(L.items), 10, 300)
+  setup: |
+    months = {{L.items!r}}
+    totals = {{totals!r}}
+  solution: |
+    result = {month: total for month, total in zip(months, totals)}
+  check: { vars: [result] }
+  require: ['node:DictComp', 'call:zip']
+
+- id: combo-zip-fstring
+  skills: [zip, f-strings]
+  prompt: 'Using `zip` and an f-string, print each item of `{{L.many}}` with its total, like `{{L.items[0]}}: {{totals[0]}}`.'
+  generate: |
+    L = labels(rng, n=3, kinds=['month', 'city'])
+    totals = ints(rng, 3, 10, 200)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+    totals = {{totals!r}}
+  solution: |
+    for label, total in zip({{L.many}}, totals):
+        print(f"{label}: {total}")
+  check: { stdout: true }
+  require: ['call:zip', 'node:JoinedStr']
+
+- id: combo-enumerate-comp
+  skills: [enumerate, list-comp, f-strings]
+  level: 2
+  prompt: 'Using a list comprehension with `enumerate`, build `labels` with strings like "1. {{L.items[0]}}" for each item of `{{L.many}}`, numbered from 1.'
+  generate: |
+    L = labels(rng)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    labels = [f"{i}. {item}" for i, item in enumerate({{L.many}}, start=1)]
+  check: { vars: [labels] }
+  require: ['node:ListComp', 'call:enumerate']
+
+- id: combo-for-fstring
+  skills: [for-in, f-strings]
+  prompt: 'For each item in `{{L.many}}`, print "- " followed by the item in upper case, using an f-string.'
+  generate: |
+    L = labels(rng, kinds=['fruit', 'tool', 'color'])
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    for item in {{L.many}}:
+        print(f"- {item.upper()}")
+  check: { stdout: true }
+  require: ['node:JoinedStr']
+
+- id: combo-for-if
+  skills: [for-in, if-elif-else]
+  prompt: 'For each number in `nums`, print "big" if it is over {{k}}, otherwise print "small".'
+  generate: |
+    nums = ints(rng, 5)
+    k = rng.randint(30, 70)
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    for n in nums:
+        if n > {{k}}:
+            print("big")
+        else:
+            print("small")
+  check: { stdout: true }
+
+- id: combo-def-loop
+  skills: [def-return, for-in, if-elif-else]
+  level: 2
+  prompt: 'Define `count_long(words, n)` that returns how many words in `words` have more than `n` letters, using a for loop.'
+  solution: |
+    def count_long(words, n):
+        count = 0
+        for word in words:
+            if len(word) > n:
+                count += 1
+        return count
+  check:
+    calls: ['count_long(["a", "abc", "abcd"], 2)', 'count_long([], 3)', 'count_long(["xyzzy"], 5)']
+
+- id: combo-split-comp
+  skills: [split-join, list-comp]
+  prompt: 'Split `line` on commas and, with a list comprehension, build `numbers`: a list of the parts converted to ints.'
+  generate: |
+    line = ','.join(str(n) for n in ints(rng, 5))
+  setup: |
+    line = {{line!r}}
+  solution: |
+    numbers = [int(part) for part in line.split(",")]
+  check: { vars: [numbers] }
+  require: ['node:ListComp']
+
+- id: combo-sorted-items
+  skills: [lambda-sorted, dict-iteration]
+  level: 2
+  prompt: 'Store the (name, score) pairs of `scores` sorted by score, highest first, in `ranked`, using `.items()` and `sorted` with a lambda.'
+  generate: |
+    names = sample(rng, FIRST_NAMES, 4)
+    scores = dict(zip(names, sample(rng, range(1, 100), 4)))
+  setup: |
+    scores = {{scores!r}}
+  solution: |
+    ranked = sorted(scores.items(), key=lambda pair: pair[1], reverse=True)
+  check: { vars: [ranked] }
+  require: ['node:Lambda', 'method:items']
+
+- id: combo-totals-by-region
+  skills: [dict-accumulate, tuple-unpacking]
+  level: 2
+  prompt: 'Each item of `sales` is a (region, amount) tuple. Build `totals`, a dict mapping each region to its total amount.'
+  generate: |
+    regions = ['north', 'south', 'east', 'west']
+    sales = [(pick(rng, regions), rng.randint(10, 99)) for _ in range(6)]
+  setup: |
+    sales = {{sales!r}}
+  solution: |
+    totals = {}
+    for region, amount in sales:
+        totals[region] = totals.get(region, 0) + amount
+  check: { vars: [totals] }
+
+- id: combo-try-loop
+  skills: [try-except, for-in]
+  level: 2
+  prompt: 'Build `numbers` from the strings in `raw`: convert each with `int()`, skipping any that fail (try/except ValueError inside a for loop, with `append`).'
+  generate: |
+    raw = [str(n) for n in ints(rng, 4)] + [pick(rng, WORDS), '']
+    rng.shuffle(raw)
+  setup: |
+    raw = {{raw!r}}
+  solution: |
+    numbers = []
+    for text in raw:
+        try:
+            numbers.append(int(text))
+        except ValueError:
+            pass
+  check: { vars: [numbers] }
+  require: ['node:Try']
+  allow: [py.append-loop]
+
+- id: combo-class-list
+  skills: [class-init, list-basics]
+  level: 3
+  prompt: 'Define a class `Basket` that starts with an empty list `self.items`, with a method `add(item)` that appends to it and a method `count()` that returns how many items it holds.'
+  solution: |
+    class Basket:
+        def __init__(self):
+            self.items = []
+
+        def add(self, item):
+            self.items.append(item)
+
+        def count(self):
+            return len(self.items)
+  check:
+    calls:
+      - |
+        b = Basket()
+        b.add("pen")
+        b.add("ink")
+        (b.count(), b.items)
+      - Basket().count()

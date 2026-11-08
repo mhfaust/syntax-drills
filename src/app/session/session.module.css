@@ -1,0 +1,174 @@
+.screen {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 16px 64px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 16px;
+}
+
+.barTitle {
+  font-weight: 650;
+}
+
+.barMeta {
+  flex: 1;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.loading,
+.error {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.skills {
+  color: var(--text-muted);
+}
+
+.prompt {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 550;
+  line-height: 1.45;
+}
+
+.hint {
+  margin: -8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.blockLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.reference :global(.cm-editor) {
+  border: 1px dashed var(--border);
+}
+
+.editor :global(.cm-editor) {
+  border: 1px solid var(--border);
+  min-height: 140px;
+}
+
+.editor :global(.cm-editor.cm-focused) {
+  border-color: var(--accent);
+}
+
+.feedbackError,
+.feedbackPass,
+.feedbackFluent {
+  border-radius: var(--radius-small);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feedbackError {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.feedbackPass {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.feedbackFluent {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.feedbackPass span,
+.feedbackFluent span {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.message {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+
+.errorClass {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.idiom {
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.tries {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 560px) {
+  .card {
+    padding: 16px;
+  }
+
+  .prompt {
+    font-size: 1.1rem;
+  }
+}

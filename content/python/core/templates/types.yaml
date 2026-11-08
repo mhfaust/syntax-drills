@@ -1,0 +1,90 @@
+# ---------------------------------------------------------------- class-init
+
+- id: class-counter
+  skills: [class-init]
+  prompt: 'Define a class `Counter` whose `__init__` sets `self.count` to 0, with a method `increment()` that adds 1 to `count`.'
+  solution: |
+    class Counter:
+        def <<__init__(self)>>:
+            self.count = 0
+
+        def increment(self):
+            <<self.count += 1>>
+  check:
+    calls:
+      - |
+        c = Counter()
+        c.increment()
+        c.increment()
+        c.count
+      - Counter().count
+
+- id: class-rectangle
+  skills: [class-init]
+  prompt: 'Define a class `Rectangle` that takes `width` and `height`, stores them as attributes, and has a method `area()` that returns width times height.'
+  solution: |
+    class Rectangle:
+        def __init__(self, width, height):
+            <<self.width = width>>
+            self.height = height
+
+        def area(<<self>>):
+            return self.width * self.height
+  check:
+    calls: ['Rectangle(3, 4).area()', 'Rectangle(2, 5).width', 'Rectangle(2, 5).height']
+
+# ---------------------------------------------------------------- type-hints
+
+- id: hints-average
+  skills: [type-hints]
+  prompt: 'Define `average(nums: list[float]) -> float` that returns the mean of `nums`, with those type hints.'
+  solution: |
+    def average(<<nums: list[float]>>) <<-> float>>:
+        return sum(nums) / len(nums)
+  check:
+    calls: ['average([1.0, 2.0, 6.0])', 'average([5])']
+  require: ['annotation:arg', 'annotation:return']
+
+- id: hints-label
+  skills: [type-hints]
+  prompt: 'Define `label(name: str, count: int) -> str` that returns strings like "3 x apple", with those type hints.'
+  solution: |
+    def label(name<<: str>>, count<<: int>>) <<-> str>>:
+        return str(count) + " x " + name
+  check:
+    calls: ['label("apple", 3)', 'label("pen", 1)']
+  require: ['annotation:arg', 'annotation:return']
+
+# ---------------------------------------------------------------- dataclass
+
+- id: dataclass-point
+  skills: [dataclass]
+  prompt: 'Define a dataclass `Point` with float fields `x` and `y`. (`dataclass` is already imported.)'
+  setup: |
+    from dataclasses import dataclass
+  solution: |
+    <<@dataclass>>
+    class Point:
+        <<x: float>>
+        y: float
+  check:
+    calls:
+      - |
+        p = Point(1.5, 2.0)
+        (p.x, p.y)
+      - Point(1, 2) == Point(1, 2)
+  require: ['decorator:dataclass']
+
+- id: dataclass-default
+  skills: [dataclass]
+  prompt: 'Define a dataclass `Item` with a `name: str` field and a `quantity: int` field that defaults to 1. (`dataclass` is already imported.)'
+  setup: |
+    from dataclasses import dataclass
+  solution: |
+    @dataclass
+    class Item:
+        name: str
+        <<quantity: int = 1>>
+  check:
+    calls: ['Item("pen").quantity', 'Item("ink", 3).quantity', 'Item("pad").name']
+  require: ['decorator:dataclass']

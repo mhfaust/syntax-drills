@@ -1,0 +1,117 @@
+# ---------------------------------------------------------------- def-return
+
+- id: def-double
+  skills: [def-return]
+  prompt: 'Define a function `double(n)` that returns `n` times 2.'
+  solution: |
+    <<def>> double(n):
+        <<return>> n * 2
+  check:
+    calls: ['double(3)', 'double(-4)', 'double(0)']
+
+- id: def-area
+  skills: [def-return]
+  prompt: 'Define a function `area(width, height)` that returns the area of a rectangle.'
+  solution: |
+    def area(<<width, height>>):
+        <<return>> width * height
+  check:
+    calls: ['area(3, 4)', 'area(2.5, 2)', 'area(0, 7)']
+
+- id: def-full-name
+  skills: [def-return]
+  level: 2
+  prompt: 'Define `full_name(first, last)` that returns the two names joined with a space.'
+  solution: |
+    <<def full_name(first, last)>>:
+        return first + " " + last
+  check:
+    calls: ['full_name("Ada", "Lovelace")', 'full_name("Grace", "Hopper")']
+
+# ---------------------------------------------------------------- default-args
+
+- id: default-greet
+  skills: [default-args]
+  prompt: 'Define `greet(name, greeting="Hello")` that returns strings like "Hello, Ana!".'
+  solution: |
+    def greet(name, <<greeting="Hello">>):
+        return greeting + ", " + name + "!"
+  check:
+    calls: ['greet("Ana")', 'greet("Ben", "Hi")']
+
+- id: default-power
+  skills: [default-args]
+  prompt: 'Define `power(base, exponent=2)` that returns `base` raised to `exponent`.'
+  solution: |
+    def power(base, <<exponent=2>>):
+        return base ** exponent
+  check:
+    calls: ['power(5)', 'power(2, 5)', 'power(3, 0)']
+
+# ---------------------------------------------------------------- keyword-args
+
+- id: kwarg-make-label
+  skills: [keyword-args]
+  prompt: 'Call `make_label` with the text {{text!r}} and `fill` set to "-", leaving `width` at its default. Pass `fill` as a keyword argument and store the result in `label`.'
+  generate: |
+    text = pick(rng, WORDS)
+  setup: |
+    def make_label(text, width=12, fill="."):
+        return text.ljust(width, fill)
+  solution: |
+    label = make_label({{text!r}}, <<fill="-">>)
+  check: { vars: [label] }
+  require: ['node:keyword']
+
+- id: kwarg-sorted-reverse
+  skills: [keyword-args]
+  prompt: 'Store `nums` sorted from largest to smallest in `result`, passing a keyword argument to `sorted`.'
+  generate: |
+    nums = ints(rng, 6)
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    result = sorted(nums, <<reverse=True>>)
+  check: { vars: [result] }
+  require: ['node:keyword']
+
+# ---------------------------------------------------------------- lambda-sorted
+
+- id: sorted-by-length
+  skills: [lambda-sorted]
+  prompt: 'Store `words` sorted by length, shortest first, in `result`, using `sorted` with `key=`.'
+  generate: |
+    items = words(rng, 5)
+  setup: |
+    words = {{items!r}}
+  solution: |
+    result = sorted(words, <<key=len>>)
+  check: { vars: [result] }
+  require: ['node:keyword']
+
+- id: sorted-pairs-by-score
+  skills: [lambda-sorted]
+  prompt: 'Each item of `pairs` is a (name, score) tuple. Store them sorted by score, highest first, in `ranked`, using `sorted` with a lambda.'
+  generate: |
+    names = sample(rng, FIRST_NAMES, 4)
+    pairs = list(zip(names, sample(rng, range(1, 100), 4)))
+  setup: |
+    pairs = {{pairs!r}}
+  solution: |
+    ranked = sorted(pairs, <<key=lambda pair: pair[1]>>, reverse=True)
+  check: { vars: [ranked] }
+  require: ['node:Lambda']
+
+- id: sorted-keys-by-value
+  skills: [lambda-sorted]
+  level: 2
+  prompt: 'Store the keys of `stock` sorted by their values, smallest first, in `order`, using `sorted` with a lambda.'
+  generate: |
+    L = labels(rng, n=4, kinds=['fruit', 'tool'])
+    stock = dict(zip(L.items, sample(rng, range(1, 60), 4)))
+  setup: |
+    stock = {{stock!r}}
+  solution: |
+    order = sorted(stock, key=<<lambda name: stock[name]>>)
+  check: { vars: [order] }
+  require: ['node:Lambda']

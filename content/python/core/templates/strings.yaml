@@ -1,0 +1,122 @@
+# ---------------------------------------------------------------- f-strings
+
+- id: fstring-sentence
+  skills: [f-strings]
+  prompt: 'Using an f-string, set `message` to "{{name}} is {{age}} years old", built from `name` and `age`.'
+  generate: |
+    name = pick(rng, FIRST_NAMES)
+    age = rng.randint(18, 80)
+  setup: |
+    name = {{name!r}}
+    age = {{age}}
+  solution: |
+    message = <<f"{name} is {age} years old">>
+  check: { vars: [message] }
+  require: ['node:JoinedStr']
+
+- id: fstring-two-decimals
+  skills: [f-strings]
+  prompt: 'Using an f-string, set `label` to the item and its price with two decimals, like "{{item}}: ${{shown}}".'
+  generate: |
+    item = pick(rng, ['lamp', 'mug', 'scarf', 'notebook', 'kettle'])
+    price = pick(rng, [4.5, 12.0, 7.25, 19.9, 3.0])
+    shown = f"{price:.2f}"
+  setup: |
+    item = {{item!r}}
+    price = {{price!r}}
+  solution: |
+    label = f"{item}: ${<<price:.2f>>}"
+  check: { vars: [label] }
+  require: ['node:JoinedStr']
+
+- id: fstring-expression
+  skills: [f-strings]
+  level: 2
+  prompt: 'Using an f-string with an expression inside the braces, set `summary` to "{{count}} items, {{total}} total", where the total is `count * each`.'
+  generate: |
+    count = rng.randint(2, 9)
+    each = rng.randint(2, 20)
+    total = count * each
+  setup: |
+    count = {{count}}
+    each = {{each}}
+  solution: |
+    summary = f"{count} items, {<<count * each>>} total"
+  check: { vars: [summary] }
+  require: ['node:JoinedStr']
+
+# ---------------------------------------------------------------- str-methods
+
+- id: str-strip-lower
+  skills: [str-methods]
+  prompt: 'Store `raw` with the surrounding spaces removed, in lower case, in `clean`.'
+  generate: |
+    raw = '  ' + sentence(rng, 2).title() + '   '
+  setup: |
+    raw = {{raw!r}}
+  solution: |
+    clean = raw.<<strip>>().<<lower>>()
+  check: { vars: [clean] }
+
+- id: str-replace
+  skills: [str-methods]
+  prompt: 'Store `text` with every {{old!r}} replaced by {{new!r}} in `result`.'
+  generate: |
+    old, new = pick(rng, [(' ', '_'), ('-', ' '), ('a', '4'), (',', ';')])
+    text = old.join(words(rng, 3))
+  setup: |
+    text = {{text!r}}
+  solution: |
+    result = text.<<replace>>({{old!r}}, {{new!r}})
+  check: { vars: [result] }
+
+- id: str-startswith
+  skills: [str-methods]
+  level: 2
+  prompt: 'Set `is_admin` to True if `username` starts with "admin_", otherwise False. Use a string method.'
+  generate: |
+    username = pick(rng, ['admin_', 'user_', 'guest_']) + pick(rng, FIRST_NAMES).lower()
+  setup: |
+    username = {{username!r}}
+  solution: |
+    is_admin = username.<<startswith>>("admin_")
+  check: { vars: [is_admin] }
+  require: ['method:startswith']
+
+# ---------------------------------------------------------------- split-join
+
+- id: split-words
+  skills: [split-join]
+  prompt: 'Split `sentence` into a list of words and store it in `words`.'
+  generate: |
+    text = sentence(rng, rng.randint(3, 5))
+  setup: |
+    sentence = {{text!r}}
+  solution: |
+    words = sentence.<<split()>>
+  check: { vars: [words] }
+
+- id: join-with-dash
+  skills: [split-join]
+  prompt: 'Join the items of `{{L.many}}` into one string separated by " - ", and store it in `result`.'
+  generate: |
+    L = labels(rng)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    result = <<" - ".join>>({{L.many}})
+  check: { vars: [result] }
+  require: ['method:join']
+
+- id: split-then-join
+  skills: [split-join]
+  level: 2
+  prompt: 'Split `line` on commas into `parts`, then join `parts` with " | " into `result`.'
+  generate: |
+    line = ','.join(words(rng, 4))
+  setup: |
+    line = {{line!r}}
+  solution: |
+    parts = line.<<split(",")>>
+    result = " | ".<<join>>(parts)
+  check: { vars: [parts, result] }

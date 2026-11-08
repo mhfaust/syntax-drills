@@ -1,0 +1,261 @@
+# ---------------------------------------------------------------- for-in
+
+- id: for-print-each
+  skills: [for-in]
+  prompt: 'Use a for loop to print each item of `{{L.many}}` on its own line.'
+  generate: |
+    L = labels(rng)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    <<for {{L.one}} in {{L.many}}>>:
+        print({{L.one}})
+  check: { stdout: true }
+  require: ['node:For']
+
+- id: for-running-total
+  skills: [for-in]
+  prompt: 'Use a for loop to add up the numbers in `{{name}}`. Store the total in `total`.'
+  generate: |
+    name = pick(rng, ['scores', 'sales', 'steps', 'points'])
+    nums = ints(rng, 5)
+  setup: |
+    {{name}} = {{nums!r}}
+  solution: |
+    total = 0
+    <<for n in {{name}}>>:
+        total += n
+  check: { vars: [total] }
+  require: ['node:For']
+
+- id: for-append-upper
+  skills: [for-in]
+  level: 2
+  prompt: 'Using a for loop and `append`, build a list `result` with each item of `{{L.many}}` in upper case.'
+  generate: |
+    L = labels(rng, kinds=['fruit', 'color', 'tool'])
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    result = []
+    <<for {{L.one}} in {{L.many}}>>:
+        result.append({{L.one}}.upper())
+  check: { vars: [result] }
+  require: ['node:For']
+  allow: [py.append-loop]
+
+# ---------------------------------------------------------------- range
+
+- id: range-squares
+  skills: [range]
+  prompt: 'Using a for loop over `range`, build a list `squares` of the squares of 1 to {{n}}, inclusive.'
+  generate: |
+    n = rng.randint(4, 8)
+  solution: |
+    squares = []
+    for i in <<range(1, {{n}} + 1)>>:
+        squares.append(i * i)
+  check: { vars: [squares] }
+  require: ['call:range']
+  allow: [py.append-loop]
+
+- id: range-countdown
+  skills: [range]
+  prompt: 'Print the numbers from {{start}} down to 1, one per line, using `range`.'
+  generate: |
+    start = rng.randint(3, 7)
+  solution: |
+    for i in <<range({{start}}, 0, -1)>>:
+        print(i)
+  check: { stdout: true }
+  require: ['call:range']
+
+- id: range-step
+  skills: [range]
+  level: 2
+  prompt: 'Store the list of multiples of {{step}} from 0 up to (but not including) {{stop}} in `result`, using `range` with a step.'
+  generate: |
+    step = rng.randint(2, 5)
+    stop = step * rng.randint(4, 7) + rng.randint(1, step - 1)
+  solution: |
+    result = list(<<range(0, {{stop}}, {{step}})>>)
+  check: { vars: [result] }
+  require: ['call:range']
+
+# ---------------------------------------------------------------- enumerate
+
+- id: enumerate-numbered
+  skills: [enumerate]
+  prompt: 'Using `enumerate`, print each item of `{{L.many}}` numbered from 1, like `1. {{L.items[0]}}`.'
+  generate: |
+    L = labels(rng)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    for i, item in <<enumerate({{L.many}}, start=1)>>:
+        print(f"{i}. {item}")
+  check: { stdout: true }
+  require: ['call:enumerate']
+
+- id: enumerate-positions
+  skills: [enumerate]
+  prompt: 'Using a for loop with `enumerate`, build a dict `positions` mapping each item of `{{L.many}}` to its index (starting at 0).'
+  generate: |
+    L = labels(rng)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    positions = {}
+    for i, item in <<enumerate({{L.many}})>>:
+        positions[item] = i
+  check: { vars: [positions] }
+  require: ['call:enumerate']
+  allow: [py.dict-assign-loop]
+
+- id: enumerate-even-positions
+  skills: [enumerate]
+  level: 2
+  prompt: 'Using `enumerate`, build a list `result` with the items of `{{L.many}}` at even indexes (0, 2, 4, …), with a for loop and `append`.'
+  generate: |
+    L = labels(rng, n=rng.randint(5, 7))
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    result = []
+    for i, item in <<enumerate({{L.many}})>>:
+        if i % 2 == 0:
+            result.append(item)
+  check: { vars: [result] }
+  require: ['call:enumerate']
+  allow: [py.append-loop]
+
+# ---------------------------------------------------------------- zip
+
+- id: zip-to-dict
+  skills: [zip]
+  prompt: 'Build a dict `result` mapping each item of `{{L.many}}` to the matching number in `totals`, using `zip`.'
+  generate: |
+    L = labels(rng, kinds=['month', 'city', 'player'])
+    totals = ints(rng, len(L.items), 10, 200)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+    totals = {{totals!r}}
+  solution: |
+    result = dict(<<zip({{L.many}}, totals)>>)
+  check: { vars: [result] }
+  require: ['call:zip']
+
+- id: zip-pairwise-sum
+  skills: [zip]
+  prompt: 'Using a for loop over `zip`, build a list `totals` where each value is the sum of the matching values in `q1` and `q2`.'
+  generate: |
+    n = rng.randint(3, 5)
+    q1 = ints(rng, n)
+    q2 = ints(rng, n)
+  setup: |
+    q1 = {{q1!r}}
+    q2 = {{q2!r}}
+  solution: |
+    totals = []
+    for a, b in <<zip(q1, q2)>>:
+        totals.append(a + b)
+  check: { vars: [totals] }
+  require: ['call:zip']
+  allow: [py.append-loop]
+
+- id: zip-print-pairs
+  skills: [zip]
+  level: 2
+  prompt: 'Using `zip`, print each name in `names` with its score from `scores` on one line, separated by a space (pass both to `print`).'
+  generate: |
+    names = sample(rng, FIRST_NAMES, 3)
+    scores = ints(rng, 3, 1, 10)
+  setup: |
+    names = {{names!r}}
+    scores = {{scores!r}}
+  solution: |
+    for name, score in <<zip(names, scores)>>:
+        print(name, score)
+  check: { stdout: true }
+  require: ['call:zip']
+
+# ---------------------------------------------------------------- while
+
+- id: while-doubling
+  skills: [while]
+  prompt: 'Start with `n = 1` and, using a while loop, keep doubling `n` until it is greater than {{limit}}.'
+  generate: |
+    limit = rng.randint(20, 500)
+  solution: |
+    n = 1
+    <<while n <= {{limit}}>>:
+        n *= 2
+  check: { vars: [n] }
+  require: ['node:While']
+
+- id: while-countdown
+  skills: [while]
+  prompt: 'Using a while loop, print `count` and then subtract 1 from it, until it reaches 0 (do not print 0).'
+  generate: |
+    count = rng.randint(3, 6)
+  setup: |
+    count = {{count}}
+  solution: |
+    <<while count > 0>>:
+        print(count)
+        count -= 1
+  check: { stdout: true }
+  require: ['node:While']
+
+- id: while-digit-sum
+  skills: [while]
+  level: 2
+  prompt: 'Using a while loop, add up the digits of `number` into `total`. (`number % 10` is the last digit; `number // 10` drops it.)'
+  generate: |
+    number = rng.randint(100, 99999)
+  setup: |
+    number = {{number}}
+  solution: |
+    total = 0
+    <<while number > 0>>:
+        total += number % 10
+        number //= 10
+  check: { vars: [total] }
+  require: ['node:While']
+
+# ---------------------------------------------------------------- break-continue
+
+- id: break-first-negative
+  skills: [break-continue]
+  prompt: 'Loop over `nums` and store the first negative number in `first`, stopping the loop with `break` as soon as you find it.'
+  generate: |
+    nums = ints(rng, 6, 1, 30)
+    nums[rng.randint(1, 5)] = -rng.randint(1, 9)
+    nums[-1] = -rng.randint(10, 20)
+  setup: |
+    nums = {{nums!r}}
+    first = None
+  solution: |
+    for n in nums:
+        if n < 0:
+            first = n
+            <<break>>
+  check: { vars: [first] }
+  require: ['node:Break']
+
+- id: continue-skip-blank
+  skills: [break-continue]
+  prompt: 'Print each string in `lines`, using `continue` to skip the empty ones.'
+  generate: |
+    lines = words(rng, 4)
+    lines.insert(rng.randint(0, 4), '')
+    lines.insert(rng.randint(0, 5), '')
+  setup: |
+    lines = {{lines!r}}
+  solution: |
+    for line in lines:
+        if not line:
+            <<continue>>
+        print(line)
+  check: { stdout: true }
+  require: ['node:Continue']

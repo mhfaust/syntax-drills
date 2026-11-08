@@ -1,0 +1,353 @@
+# Template format (see src/languages/python/pythonContent.ts for the schema):
+#   generate  Python run with a seeded `rng`; assigned names become {{placeholders}}
+#   setup     read-only code shown above the editor
+#   solution  the idiomatic answer; <<...>> marks the blanks for the fill level
+#   check     vars / calls / stdout compared against the solution's
+#   require   constructs the prompt asks for; allow: idiom flags that are fine here
+# Never put {{...}} inside f-string braces; use a fixed loop variable name instead.
+
+# ---------------------------------------------------------------- list-basics
+
+- id: list-last-item
+  skills: [list-basics]
+  prompt: 'Store the last item of `{{L.many}}` in `result`, using a negative index.'
+  generate: |
+    L = labels(rng, n=rng.randint(4, 6))
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    result = {{L.many}}<<[-1]>>
+  check: { vars: [result] }
+
+- id: list-append
+  skills: [list-basics]
+  prompt: 'Add {{extra!r}} to the end of `{{L.many}}`.'
+  generate: |
+    L = labels(rng, n=5)
+    extra = L.items[-1]
+    items = L.items[:-1]
+  setup: |
+    {{L.many}} = {{items!r}}
+  solution: |
+    {{L.many}}.<<append>>({{extra!r}})
+  check: { vars: ['{{L.many}}'] }
+
+- id: list-len-and-first
+  skills: [list-basics]
+  level: 2
+  prompt: 'Store the number of items in `{{L.many}}` in `count`, and its first item in `first`.'
+  generate: |
+    L = labels(rng)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    count = <<len>>({{L.many}})
+    first = {{L.many}}<<[0]>>
+  check: { vars: [count, first] }
+
+# ---------------------------------------------------------------- dict-basics
+
+- id: dict-lookup
+  skills: [dict-basics]
+  prompt: 'Store the price of {{key!r}} from `prices` in `price`.'
+  generate: |
+    L = labels(rng, n=4, kinds=['fruit', 'tool'])
+    table = dict(zip(L.items, prices(rng, 4)))
+    key = pick(rng, L.items)
+  setup: |
+    prices = {{table!r}}
+  solution: |
+    price = prices<<[{{key!r}}]>>
+  check: { vars: [price] }
+
+- id: dict-get-default
+  skills: [dict-basics]
+  prompt: 'Store the stock count for {{missing!r}} in `count`, using `.get` so that a missing item gives 0.'
+  generate: |
+    L = labels(rng, n=5, kinds=['fruit', 'tool', 'color'])
+    stock = dict(zip(L.items[:4], ints(rng, 4, 1, 30)))
+    missing = L.items[4]
+  setup: |
+    stock = {{stock!r}}
+  solution: |
+    count = stock.<<get>>({{missing!r}}, 0)
+  check: { vars: [count] }
+  require: ['method:get']
+
+- id: dict-assign-and-update
+  skills: [dict-basics]
+  level: 2
+  prompt: 'In `scores`, set the score for {{new!r}} to {{value}}, then add 1 to the score for {{old!r}}.'
+  generate: |
+    names = sample(rng, FIRST_NAMES, 4)
+    scores = dict(zip(names[:3], ints(rng, 3, 1, 20)))
+    new = names[3]
+    old = pick(rng, names[:3])
+    value = rng.randint(1, 20)
+  setup: |
+    scores = {{scores!r}}
+  solution: |
+    scores<<[{{new!r}}] = {{value}}>>
+    scores[{{old!r}}] <<+=>> 1
+  check: { vars: [scores] }
+
+# ---------------------------------------------------------------- in-operator
+
+- id: in-membership
+  skills: [in-operator]
+  prompt: 'Set `found` to True if {{target!r}} is in `{{L.many}}`, otherwise False.'
+  generate: |
+    L = labels(rng, n=6)
+    items = L.items[:4]
+    target = pick(rng, L.items)
+  setup: |
+    {{L.many}} = {{items!r}}
+  solution: |
+    found = {{target!r}} <<in>> {{L.many}}
+  check: { vars: [found] }
+
+- id: in-append-if-missing
+  skills: [in-operator]
+  prompt: 'If {{target!r}} is not already in `{{L.many}}`, append it.'
+  generate: |
+    L = labels(rng, n=6)
+    items = L.items[:4]
+    target = pick(rng, L.items[4:])
+  setup: |
+    {{L.many}} = {{items!r}}
+  solution: |
+    if {{target!r}} <<not in>> {{L.many}}:
+        {{L.many}}.append({{target!r}})
+  check: { vars: ['{{L.many}}'] }
+
+- id: in-dict-key
+  skills: [in-operator]
+  level: 2
+  prompt: 'Print "yes" if {{key!r}} is a key of `stock`, otherwise print "no".'
+  generate: |
+    L = labels(rng, n=5, kinds=['fruit', 'tool'])
+    stock = dict(zip(L.items[:3], ints(rng, 3, 1, 30)))
+    key = pick(rng, L.items)
+  setup: |
+    stock = {{stock!r}}
+  solution: |
+    if {{key!r}} <<in stock>>:
+        print("yes")
+    else:
+        print("no")
+  check: { stdout: true }
+
+# ---------------------------------------------------------------- dict-iteration
+
+- id: dict-items-print
+  skills: [dict-iteration]
+  prompt: 'Using `.items()`, print each name and price in `prices` on its own line, separated by a space (pass both to `print`).'
+  generate: |
+    L = labels(rng, n=3, kinds=['fruit', 'tool'])
+    table = dict(zip(L.items, ints(rng, 3, 1, 9)))
+  setup: |
+    prices = {{table!r}}
+  solution: |
+    for name, price in prices.<<items()>>:
+        print(name, price)
+  check: { stdout: true }
+  require: ['method:items']
+
+- id: dict-values-total
+  skills: [dict-iteration]
+  prompt: 'Add up all the values in `scores` into `total`, with a for loop over `.values()`.'
+  generate: |
+    names = sample(rng, FIRST_NAMES, 4)
+    scores = dict(zip(names, ints(rng, 4, 1, 50)))
+  setup: |
+    scores = {{scores!r}}
+  solution: |
+    total = 0
+    for score in scores.<<values()>>:
+        total += score
+  check: { vars: [total] }
+  require: ['method:values', 'node:For']
+
+- id: dict-items-filter
+  skills: [dict-iteration]
+  level: 2
+  prompt: 'Build a list `expensive` of the names in `prices` whose price is over {{limit}}, looping over `.items()`.'
+  generate: |
+    L = labels(rng, n=5, kinds=['fruit', 'tool'])
+    table = dict(zip(L.items, ints(rng, 5, 1, 20)))
+    limit = rng.randint(5, 12)
+  setup: |
+    prices = {{table!r}}
+  solution: |
+    expensive = []
+    for name, price in prices.<<items()>>:
+        if price > {{limit}}:
+            expensive.append(name)
+  check: { vars: [expensive] }
+  require: ['method:items']
+  allow: [py.append-loop]
+
+# ---------------------------------------------------------------- slicing
+
+- id: slice-first-three
+  skills: [slicing]
+  prompt: 'Store the first three items of `{{L.many}}` in `first_three`, using a slice.'
+  generate: |
+    L = labels(rng, n=rng.randint(5, 7))
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    first_three = {{L.many}}<<[:3]>>
+  check: { vars: [first_three] }
+  require: ['node:Slice']
+
+- id: slice-reverse
+  skills: [slicing]
+  prompt: 'Store `{{L.many}}` in reverse order in `backwards`, using a slice.'
+  generate: |
+    L = labels(rng)
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    backwards = {{L.many}}<<[::-1]>>
+  check: { vars: [backwards] }
+  require: ['node:Slice']
+
+- id: slice-middle
+  skills: [slicing]
+  level: 2
+  prompt: 'Store `word` without its first and last characters in `middle`.'
+  generate: |
+    word = pick(rng, WORDS)
+  setup: |
+    word = {{word!r}}
+  solution: |
+    middle = word<<[1:-1]>>
+  check: { vars: [middle] }
+
+# ---------------------------------------------------------------- tuple-unpacking
+
+- id: unpack-swap
+  skills: [tuple-unpacking]
+  prompt: 'Swap the values of `a` and `b` in a single line.'
+  generate: |
+    a, b = sample(rng, range(1, 50), 2)
+  setup: |
+    a = {{a}}
+    b = {{b}}
+  solution: |
+    <<a, b = b, a>>
+  check: { vars: [a, b] }
+
+- id: unpack-point
+  skills: [tuple-unpacking]
+  prompt: 'Unpack `point` into `x`, `y` and `z` in one assignment.'
+  generate: |
+    point = tuple(ints(rng, 3, -9, 9))
+  setup: |
+    point = {{point!r}}
+  solution: |
+    <<x, y, z>> = point
+  check: { vars: [x, y, z] }
+
+- id: unpack-in-for
+  skills: [tuple-unpacking]
+  level: 2
+  prompt: 'Each item in `pairs` is a (name, score) tuple. Print each one like `Ana scored 9` (pass the pieces to `print`), unpacking the pair in the for statement.'
+  generate: |
+    names = sample(rng, FIRST_NAMES, 3)
+    pairs = list(zip(names, ints(rng, 3, 1, 10)))
+  setup: |
+    pairs = {{pairs!r}}
+  solution: |
+    for <<name, score>> in pairs:
+        print(name, "scored", score)
+  check: { stdout: true }
+
+# ---------------------------------------------------------------- dict-accumulate
+
+- id: count-words
+  skills: [dict-accumulate]
+  prompt: 'Count how many times each word appears in `words`, in a dict `counts`. Use `.get` with a default of 0.'
+  generate: |
+    base = words(rng, 3)
+    items = [pick(rng, base) for _ in range(7)]
+  setup: |
+    words = {{items!r}}
+  solution: |
+    counts = {}
+    for word in words:
+        counts[word] = counts.<<get(word, 0)>> + 1
+  check: { vars: [counts] }
+  require: ['method:get']
+
+- id: group-by-length
+  skills: [dict-accumulate]
+  level: 2
+  prompt: 'Build `groups`, a dict mapping each word length in `words` to a list of the words with that length, in their original order.'
+  generate: |
+    items = words(rng, 6)
+  setup: |
+    words = {{items!r}}
+  solution: |
+    groups = {}
+    for word in words:
+        groups.<<setdefault(len(word), [])>>.append(word)
+  check: { vars: [groups] }
+
+- id: count-letters
+  skills: [dict-accumulate]
+  prompt: 'Count each letter in `word` into a dict `counts`, using `.get` with a default of 0.'
+  generate: |
+    word = pick(rng, ['banana', 'letter', 'balloon', 'mississippi', 'committee', 'success'])
+  setup: |
+    word = {{word!r}}
+  solution: |
+    counts = {}
+    for letter in word:
+        counts[letter] = counts.<<get(letter, 0)>> + 1
+  check: { vars: [counts] }
+  require: ['method:get']
+
+# ---------------------------------------------------------------- sets
+
+- id: set-unique
+  skills: [sets]
+  prompt: 'Store the unique values of `nums` as a set in `unique`.'
+  generate: |
+    nums = [rng.randint(1, 6) for _ in range(8)]
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    unique = <<set>>(nums)
+  check: { vars: [unique] }
+
+- id: set-intersection
+  skills: [sets]
+  prompt: 'Store the items that appear in both `a` and `b` in `common`, as a set.'
+  generate: |
+    L = labels(rng, n=6, kinds=['fruit', 'color', 'tool'])
+    a = L.items[:4]
+    b = L.items[2:]
+  setup: |
+    a = {{a!r}}
+    b = {{b!r}}
+  solution: |
+    common = set(a) <<&>> set(b)
+  check: { vars: [common] }
+
+- id: set-add-loop
+  skills: [sets]
+  level: 2
+  prompt: 'Start `seen` as an empty set, then add each item of `{{L.many}}` to it with `.add` in a for loop.'
+  generate: |
+    L = labels(rng, n=3, kinds=['fruit', 'color'])
+    items = [pick(rng, L.items) for _ in range(6)]
+  setup: |
+    {{L.many}} = {{items!r}}
+  solution: |
+    seen = <<set()>>
+    for item in {{L.many}}:
+        seen.<<add>>(item)
+  check: { vars: [seen] }
+  require: ['method:add']

@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------- aggregates
+
+- id: agg-total-low-high
+  skills: [aggregates]
+  prompt: 'Store the total, smallest and largest values of `{{name}}` in `total`, `low` and `high`.'
+  generate: |
+    name = pick(rng, ['temps', 'scores', 'prices', 'sizes'])
+    nums = ints(rng, 6)
+  setup: |
+    {{name}} = {{nums!r}}
+  solution: |
+    total = <<sum>>({{name}})
+    low = <<min>>({{name}})
+    high = <<max>>({{name}})
+  check: { vars: [total, low, high] }
+
+- id: agg-average
+  skills: [aggregates]
+  prompt: 'Store the average of `{{name}}` in `average`, using `sum` and `len`.'
+  generate: |
+    name = pick(rng, ['temps', 'scores', 'ratings'])
+    nums = ints(rng, 5)
+  setup: |
+    {{name}} = {{nums!r}}
+  solution: |
+    average = <<sum({{name}}) / len({{name}})>>
+  check: { vars: [average] }
+  require: ['call:sum', 'call:len']
+
+- id: agg-longest-word
+  skills: [aggregates]
+  level: 2
+  prompt: 'Store the longest word in `words` in `longest`, using `max` with `key=len`.'
+  generate: |
+    items = words(rng, 5)
+  setup: |
+    words = {{items!r}}
+  solution: |
+    longest = max(words, <<key=len>>)
+  check: { vars: [longest] }
+  require: ['call:max']
+
+# ---------------------------------------------------------------- any-all
+
+- id: any-negative
+  skills: [any-all]
+  prompt: 'Set `has_negative` to whether any number in `nums` is negative, using `any()`.'
+  generate: |
+    nums = ints(rng, 6, -3, 30)
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    has_negative = <<any(n < 0 for n in nums)>>
+  check: { vars: [has_negative] }
+  require: ['call:any']
+
+- id: all-long-words
+  skills: [any-all]
+  prompt: 'Set `all_long` to whether every word in `words` has more than 4 letters, using `all()`.'
+  generate: |
+    items = words(rng, 4) if rng.random() < 0.5 else [w for w in WORDS if len(w) > 4][:4]
+  setup: |
+    words = {{items!r}}
+  solution: |
+    all_long = <<all(len(word) > 4 for word in words)>>
+  check: { vars: [all_long] }
+  require: ['call:all']

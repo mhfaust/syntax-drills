@@ -1,0 +1,169 @@
+# ---------------------------------------------------------------- if-elif-else
+
+- id: if-letter-grade
+  skills: [if-elif-else]
+  prompt: 'Set `grade` to "A" if `score` is 90 or more, "B" if it is 80 or more, and "C" otherwise.'
+  generate: |
+    score = pick(rng, [rng.randint(90, 100), rng.randint(80, 89), rng.randint(50, 79)])
+  setup: |
+    score = {{score}}
+  solution: |
+    <<if>> score >= 90:
+        grade = "A"
+    <<elif>> score >= 80:
+        grade = "B"
+    <<else>>:
+        grade = "C"
+  check: { vars: [grade] }
+
+- id: if-sign
+  skills: [if-elif-else]
+  prompt: 'Set `label` to "positive", "negative" or "zero", depending on `n`.'
+  generate: |
+    n = pick(rng, [rng.randint(1, 50), -rng.randint(1, 50), 0])
+  setup: |
+    n = {{n}}
+  solution: |
+    if n > 0:
+        label = "positive"
+    <<elif n < 0>>:
+        label = "negative"
+    else:
+        label = "zero"
+  check: { vars: [label] }
+
+- id: if-even-odd-print
+  skills: [if-elif-else]
+  prompt: 'Print "even" if `n` is even, otherwise print "odd".'
+  generate: |
+    n = rng.randint(1, 99)
+  setup: |
+    n = {{n}}
+  solution: |
+    <<if n % 2 == 0>>:
+        print("even")
+    <<else>>:
+        print("odd")
+  check: { stdout: true }
+
+# ---------------------------------------------------------------- truthiness
+
+- id: truthy-empty-list
+  skills: [truthiness]
+  prompt: 'Set `message` to "empty" if `items` has no elements, otherwise "has items". Test the list directly, without `len`.'
+  generate: |
+    items = pick(rng, [[], words(rng, 2)])
+  setup: |
+    items = {{items!r}}
+  solution: |
+    <<if not items>>:
+        message = "empty"
+    else:
+        message = "has items"
+  check: { vars: [message] }
+  require: ['node:UnaryOp']
+
+- id: truthy-is-none
+  skills: [truthiness]
+  prompt: 'Set `label` to "missing" if `value` is None, otherwise to `value` itself.'
+  generate: |
+    value = pick(rng, [None, pick(rng, WORDS)])
+  setup: |
+    value = {{value!r}}
+  solution: |
+    if value <<is None>>:
+        label = "missing"
+    else:
+        label = value
+  check: { vars: [label] }
+
+- id: truthy-count-nonempty
+  skills: [truthiness]
+  level: 2
+  prompt: 'Store how many strings in `entries` are non-empty in `count`, using a for loop and an `if` that tests each string directly.'
+  generate: |
+    entries = words(rng, 4) + ['', '']
+    rng.shuffle(entries)
+  setup: |
+    entries = {{entries!r}}
+  solution: |
+    count = 0
+    for entry in entries:
+        <<if entry>>:
+            count += 1
+  check: { vars: [count] }
+
+# ---------------------------------------------------------------- ternary
+
+- id: ternary-parity
+  skills: [ternary]
+  prompt: 'In one line, using a conditional expression, set `kind` to "even" if `n` is even, otherwise "odd".'
+  generate: |
+    n = rng.randint(1, 99)
+  setup: |
+    n = {{n}}
+  solution: |
+    kind = "even" <<if n % 2 == 0 else>> "odd"
+  check: { vars: [kind] }
+  require: ['node:IfExp']
+
+- id: ternary-bigger
+  skills: [ternary]
+  prompt: 'Using a conditional expression, set `bigger` to the larger of `a` and `b`.'
+  generate: |
+    a, b = sample(rng, range(1, 100), 2)
+  setup: |
+    a = {{a}}
+    b = {{b}}
+  solution: |
+    bigger = a <<if a > b else>> b
+  check: { vars: [bigger] }
+  require: ['node:IfExp']
+
+- id: ternary-capacity
+  skills: [ternary]
+  level: 2
+  prompt: 'Using a conditional expression, set `status` to "open" if `count` is less than {{cap}}, otherwise "full".'
+  generate: |
+    cap = rng.randint(10, 30)
+    count = rng.randint(cap - 5, cap + 5)
+  setup: |
+    count = {{count}}
+  solution: |
+    status = "open" <<if count < {{cap}} else>> "full"
+  check: { vars: [status] }
+  require: ['node:IfExp']
+
+# ---------------------------------------------------------------- try-except
+
+- id: try-parse-int
+  skills: [try-except]
+  prompt: 'Convert `text` to an int and store it in `value`. If it is not a valid number, store 0 instead. Use try/except ValueError.'
+  generate: |
+    text = pick(rng, [str(rng.randint(1, 500)), pick(rng, WORDS), '12a'])
+  setup: |
+    text = {{text!r}}
+  solution: |
+    <<try>>:
+        value = int(text)
+    <<except ValueError>>:
+        value = 0
+  check: { vars: [value] }
+  require: ['node:Try']
+
+- id: try-key-lookup
+  skills: [try-except]
+  prompt: 'Store `stock[{{key!r}}]` in `count`, or -1 if that key is missing. Use try/except KeyError.'
+  generate: |
+    L = labels(rng, n=4, kinds=['fruit', 'tool'])
+    stock = dict(zip(L.items[:3], ints(rng, 3, 1, 30)))
+    key = pick(rng, L.items)
+  setup: |
+    stock = {{stock!r}}
+  solution: |
+    try:
+        count = stock[{{key!r}}]
+    <<except KeyError>>:
+        count = -1
+  check: { vars: [count] }
+  require: ['node:Try']

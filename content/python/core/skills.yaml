@@ -1,0 +1,227 @@
+# Python core skills, in the order new skills are introduced.
+# `requires` lists prerequisites; a skill unlocks once they all reach the compose level.
+pack: python/core
+version: 1
+
+skills:
+  - id: list-basics
+    name: Lists
+    group: Collections
+    summary: List literals, indexing, len and append.
+
+  - id: for-in
+    name: for … in
+    group: Loops
+    summary: Loop over the items of a collection.
+    requires: [list-basics]
+
+  - id: if-elif-else
+    name: if / elif / else
+    group: Control flow
+    summary: Branch on conditions.
+
+  - id: f-strings
+    name: f-strings
+    group: Strings
+    summary: Build strings with f"{value}" and format specs like {x:.2f}.
+
+  - id: dict-basics
+    name: Dicts
+    group: Collections
+    summary: Dict literals, lookup, assignment and .get.
+
+  - id: def-return
+    name: def and return
+    group: Functions
+    summary: Define a function that takes arguments and returns a value.
+
+  - id: range
+    name: range()
+    group: Loops
+    summary: Loop over a sequence of numbers.
+    requires: [for-in]
+
+  - id: str-methods
+    name: String methods
+    group: Strings
+    summary: .strip, .lower, .upper, .replace, .startswith and friends.
+
+  - id: split-join
+    name: split and join
+    group: Strings
+    summary: Turn strings into lists and lists back into strings.
+    requires: [list-basics]
+
+  - id: enumerate
+    name: enumerate()
+    group: Loops
+    summary: Loop with an index and an item at the same time.
+    requires: [for-in]
+
+  - id: zip
+    name: zip()
+    group: Loops
+    summary: Walk two collections in step.
+    requires: [for-in]
+
+  - id: aggregates
+    name: sum, min, max, len
+    group: Built-ins
+    summary: Summarize a collection with built-in functions.
+    requires: [list-basics]
+
+  - id: in-operator
+    name: in
+    group: Collections
+    summary: Test membership in a list, string or dict.
+    requires: [list-basics, if-elif-else]
+
+  - id: list-comp
+    name: List comprehensions
+    group: Comprehensions
+    summary: Build a list from another with [expr for x in xs].
+    requires: [for-in]
+
+  - id: dict-iteration
+    name: Looping over dicts
+    group: Collections
+    summary: Iterate a dict's keys, or its key-value pairs with .items().
+    requires: [dict-basics, for-in]
+
+  - id: slicing
+    name: Slicing
+    group: Collections
+    summary: Take parts of lists and strings with [start:stop:step].
+    requires: [list-basics]
+
+  - id: tuple-unpacking
+    name: Tuple unpacking
+    group: Collections
+    summary: Assign several names at once, including in for loops.
+    requires: [for-in]
+
+  - id: truthiness
+    name: Truthiness and None
+    group: Control flow
+    summary: Test emptiness with `if not xs` and None with `is None`.
+    requires: [if-elif-else]
+
+  - id: ternary
+    name: Conditional expressions
+    group: Control flow
+    summary: Choose a value inline with `a if cond else b`.
+    requires: [if-elif-else]
+
+  - id: while
+    name: while loops
+    group: Loops
+    summary: Loop until a condition stops being true.
+    requires: [if-elif-else]
+
+  - id: break-continue
+    name: break and continue
+    group: Loops
+    summary: Leave a loop early, or skip to the next item.
+    requires: [for-in, if-elif-else]
+
+  - id: list-comp-filter
+    name: Filtering comprehensions
+    group: Comprehensions
+    summary: Keep only some items with [x for x in xs if cond].
+    requires: [list-comp, if-elif-else]
+
+  - id: dict-accumulate
+    name: Counting and grouping
+    group: Collections
+    summary: Build up a dict in a loop with d[k] = d.get(k, 0) + 1 and similar.
+    requires: [dict-basics, for-in]
+
+  - id: dict-comp
+    name: Dict comprehensions
+    group: Comprehensions
+    summary: 'Build a dict with {k: v for ...}.'
+    requires: [list-comp, dict-iteration]
+
+  - id: sets
+    name: Sets
+    group: Collections
+    summary: Unique values, set literals, set() and set operations.
+    requires: [list-basics]
+
+  - id: default-args
+    name: Default arguments
+    group: Functions
+    summary: Parameters with default values.
+    requires: [def-return]
+
+  - id: keyword-args
+    name: Keyword arguments
+    group: Functions
+    summary: Call functions with name=value arguments.
+    requires: [def-return]
+
+  - id: lambda-sorted
+    name: sorted() with key=lambda
+    group: Functions
+    summary: Sort by a computed key, including reverse order.
+    requires: [def-return, list-basics]
+
+  - id: any-all
+    name: any() and all()
+    group: Built-ins
+    summary: Test whether some or every item meets a condition.
+    requires: [aggregates, list-comp]
+
+  - id: try-except
+    name: try / except
+    group: Control flow
+    summary: Catch an exception and recover.
+    requires: [if-elif-else]
+
+  - id: class-init
+    name: Classes
+    group: Types
+    summary: A class with __init__, attributes and a method.
+    requires: [def-return]
+
+  - id: type-hints
+    name: Type hints
+    group: Types
+    summary: Annotate parameters and return values.
+    requires: [def-return]
+
+  - id: dataclass
+    name: '@dataclass'
+    group: Types
+    summary: Declare a data class with typed fields.
+    requires: [class-init, type-hints]
+
+# Patterns the grader flags, and the skill that teaches the better way.
+idioms:
+  - flag: py.range-len-index
+    skill: enumerate
+    message: '`for i in range(len(xs))` works, but `for i, x in enumerate(xs)` (or just `for x in xs`) is the Python way.'
+  - flag: py.manual-counter
+    skill: enumerate
+    message: 'Keeping your own counter works, but `enumerate()` gives you the index for free.'
+  - flag: py.append-loop
+    skill: list-comp
+    message: 'A loop that only appends can usually be a list comprehension.'
+  - flag: py.dict-assign-loop
+    skill: dict-comp
+    message: 'A loop that only sets d[k] = v can usually be a dict comprehension.'
+  - flag: py.keys-iteration
+    skill: dict-iteration
+    message: 'Looping over a dict already gives you its keys, so `.keys()` is not needed.'
+  - flag: py.compare-to-none
+    skill: truthiness
+    message: 'Compare with None using `is None` / `is not None`, not `==`.'
+  - flag: py.compare-to-bool
+    skill: truthiness
+    message: 'Test the value directly (`if done:`) instead of comparing with True or False.'
+  - flag: py.len-comparison
+    skill: truthiness
+    message: 'Empty collections are falsy, so `if not xs:` replaces `if len(xs) == 0:`.'
+  - flag: py.string-concat-loop
+    skill: split-join
+    message: 'Building a string with += in a loop works, but `"".join(...)` is the usual way.'

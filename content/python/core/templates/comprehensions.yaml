@@ -1,0 +1,118 @@
+# ---------------------------------------------------------------- list-comp
+
+- id: comp-squares
+  skills: [list-comp]
+  prompt: 'Using a list comprehension, build `squares` with each number in `nums` squared.'
+  generate: |
+    nums = ints(rng, 5, 1, 12)
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    squares = <<[n * n for n in nums]>>
+  check: { vars: [squares] }
+  require: ['node:ListComp']
+
+- id: comp-upper
+  skills: [list-comp]
+  prompt: 'Using a list comprehension, build `upper` with each item of `{{L.many}}` in upper case.'
+  generate: |
+    L = labels(rng, kinds=['fruit', 'color', 'tool'])
+  setup: |
+    {{L.many}} = {{L.items!r}}
+  solution: |
+    upper = <<[{{L.one}}.upper() for {{L.one}} in {{L.many}}]>>
+  check: { vars: [upper] }
+  require: ['node:ListComp']
+
+- id: comp-lengths
+  skills: [list-comp]
+  level: 2
+  prompt: 'Using a list comprehension, build `lengths` with the length of each word in `words`.'
+  generate: |
+    items = words(rng, 5)
+  setup: |
+    words = {{items!r}}
+  solution: |
+    lengths = [<<len(word) for word in words>>]
+  check: { vars: [lengths] }
+  require: ['node:ListComp']
+
+# ---------------------------------------------------------------- list-comp-filter
+
+- id: comp-filter-even
+  skills: [list-comp-filter]
+  prompt: 'Using a list comprehension, build `evens` with only the even numbers from `nums`.'
+  generate: |
+    nums = ints(rng, 7, 1, 40)
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    evens = [n for n in nums <<if n % 2 == 0>>]
+  check: { vars: [evens] }
+  require: ['node:ListComp']
+
+- id: comp-filter-long-words
+  skills: [list-comp-filter]
+  prompt: 'Using a list comprehension, build `long_words` with the words in `words` that have more than {{k}} letters.'
+  generate: |
+    items = words(rng, 6)
+    k = 5
+  setup: |
+    words = {{items!r}}
+  solution: |
+    long_words = <<[word for word in words if len(word) > {{k}}]>>
+  check: { vars: [long_words] }
+  require: ['node:ListComp']
+
+- id: comp-filter-and-map
+  skills: [list-comp-filter]
+  level: 2
+  prompt: 'Using a list comprehension, build `result` with the squares of only the positive numbers in `nums`.'
+  generate: |
+    nums = ints(rng, 7, -9, 9)
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    result = [<<n * n for n in nums if n > 0>>]
+  check: { vars: [result] }
+  require: ['node:ListComp']
+
+# ---------------------------------------------------------------- dict-comp
+
+- id: dictcomp-squares
+  skills: [dict-comp]
+  prompt: 'Using a dict comprehension, build `squares` mapping each number in `nums` to its square.'
+  generate: |
+    nums = sample(rng, range(1, 13), 4)
+  setup: |
+    nums = {{nums!r}}
+  solution: |
+    squares = <<{n: n * n for n in nums}>>
+  check: { vars: [squares] }
+  require: ['node:DictComp']
+
+- id: dictcomp-lengths
+  skills: [dict-comp]
+  prompt: 'Using a dict comprehension, build `lengths` mapping each word in `words` to its length.'
+  generate: |
+    items = words(rng, 4)
+  setup: |
+    words = {{items!r}}
+  solution: |
+    lengths = <<{word: len(word) for word in words}>>
+  check: { vars: [lengths] }
+  require: ['node:DictComp']
+
+- id: dictcomp-invert
+  skills: [dict-comp]
+  level: 2
+  prompt: 'Using a dict comprehension over `.items()`, build `by_code`, which swaps the keys and values of `codes`.'
+  generate: |
+    L = labels(rng, n=4, kinds=['city', 'planet'])
+    codes = {name: name[:3].upper() for name in L.items}
+  setup: |
+    codes = {{codes!r}}
+  solution: |
+    by_code = {<<code: name for name, code in codes.items()>>}
+  check: { vars: [by_code] }
+  require: ['node:DictComp']
