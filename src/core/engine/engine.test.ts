@@ -97,6 +97,19 @@ describe('placement', () => {
     expect(state.skills.get('t/enum')?.status).toBe('new');
   });
 
+  it('leaves a missed skill new, so it is introduced from the start later', () => {
+    const state = engine.replay([
+      makeAttempt({ templateId: 't/dictcomp-a', mode: 'placement', ...failed }),
+    ]);
+    expect(state.skills.get('t/dictcomp')).toMatchObject({
+      status: 'new',
+      scaffold: 'copy',
+      card: null,
+    });
+    const pick = engine.pickNext(state, { now: new Date(day(2)), items: [], random });
+    expect(pick).toMatchObject({ focusSkillId: 't/loop', reason: 'introduce' });
+  });
+
   it('tests the deepest skill first and skips what builds on a failed skill', () => {
     const state = engine.replay([]);
     expect(engine.pickPlacement(state, { items: [], random })?.focusSkillId).toBe('t/dictcomp');
@@ -216,6 +229,26 @@ describe('pickNext', () => {
       const pick = engine.pickNext(state, { now, items: [], random: Math.random });
       expect(pick?.template.id).not.toBe('t/enum-fstr');
     }
+  });
+
+  it('parks a started skill until its prerequisites reach compose', () => {
+    /* comp was practiced and failed, but loop (its prerequisite) is still new */
+    const state = engine.replay([makeAttempt({ templateId: 't/comp-a', ...failed })]);
+    expect(state.skills.get('t/comp')?.status).toBe('learning');
+    for (let i = 0; i < 10; i++) {
+      const pick = engine.pickNext(state, { now, items: [], random: Math.random });
+      expect(pick).toMatchObject({ focusSkillId: 't/loop', reason: 'introduce' });
+    }
+
+    engine.apply(state, makeAttempt({ templateId: 't/loop-a', startedAt: day(1) }));
+    const items = [
+      item('fstr', { reason: 'warmup', scaffold: 'copy' }),
+      item('fstr', { reason: 'warmup', scaffold: 'copy' }),
+    ];
+    expect(engine.pickNext(state, { now, items, random })).toMatchObject({
+      focusSkillId: 't/comp',
+      reason: 'due',
+    });
   });
 
   it('makes a skill due now when its idiom is missed', () => {

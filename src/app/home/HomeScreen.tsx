@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import styles from '@/app/home/home.module.css';
 import { useServices } from '@/app/services';
 import type { LearnerHandle } from '@/app/useLearner';
+import { prerequisitesReady } from '@/core/engine/selection';
 import type { Attempt } from '@/core/model/attempt';
 
 type Props = {
@@ -22,7 +23,10 @@ export function HomeScreen({ learner, onStart, onSkills }: Props) {
   const now = clock.now();
   const skills = [...state.skills.values()];
   const count = (status: string) => skills.filter((s) => s.status === status).length;
-  const due = skills.filter((s) => s.card && s.card.dueAt <= now).length;
+  const due = content.skills
+    .filter((def) => prerequisitesReady(state, def))
+    .map((def) => state.skills.get(def.id)!)
+    .filter((s) => s.card && s.card.dueAt <= now).length;
   const firstRun = state.attemptCount === 0;
 
   async function exportLog() {

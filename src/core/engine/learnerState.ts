@@ -109,8 +109,12 @@ export function applyAttempt(
     return skill;
   };
 
-  /* Warm-ups only calibrate typing speed. */
-  if (attempt.mode !== 'warmup') {
+  /*
+   * Warm-ups only calibrate typing speed. A missed placement item only means "not known
+   * yet": the skill stays new, to be introduced from the start when its turn comes.
+   */
+  const missedPlacement = attempt.mode === 'placement' && performance === 'fail';
+  if (attempt.mode !== 'warmup' && !missedPlacement) {
     const at = new Date(attempt.startedAt);
     const skills = attempt.skillIds
       .map((id) => state.skills.get(id))

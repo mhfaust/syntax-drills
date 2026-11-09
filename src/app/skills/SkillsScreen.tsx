@@ -3,6 +3,7 @@ import { useServices } from '@/app/services';
 import styles from '@/app/skills/skills.module.css';
 import type { LearnerHandle } from '@/app/useLearner';
 import { MASTERY } from '@/core/engine/learnerState';
+import { prerequisitesReady } from '@/core/engine/selection';
 
 export function SkillsScreen({ learner, onBack }: { learner: LearnerHandle; onBack(): void }) {
   const { content, clock } = useServices();
@@ -57,7 +58,13 @@ export function SkillsScreen({ learner, onBack }: { learner: LearnerHandle; onBa
                       </td>
                       <td>{s.status === 'new' ? '—' : SCAFFOLD_LABEL[s.scaffold]}</td>
                       <td>{s.fluentCompose.length}</td>
-                      <td>{s.status === 'new' ? '—' : dueLabel(s.card?.dueAt, now)}</td>
+                      <td>
+                        {s.status === 'new' ?
+                          '—'
+                        : prerequisitesReady(state, skill) ?
+                          dueLabel(s.card?.dueAt, now)
+                        : 'After prerequisites'}
+                      </td>
                     </tr>
                   );
                 })}

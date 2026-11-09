@@ -53,7 +53,8 @@ Enforced by `npm run boundaries` (dependency-cruiser, see `.dependency-cruiser.c
 | Difficulty match | `rating.ts`, `selection.ts` | Elo ratings for skills and templates; compose picks the template nearest 85% predicted success |
 | Fluency | `fluency.ts` | target time = thinking allowance + characters ÷ typing speed; typing speed is learned from copy items |
 | Mastery | `learnerState.ts` | 3 fluent compose attempts, 2+ templates, 3+ days, last compose not failed |
-| Placement | `placement.ts` | tests the deepest untested skill; a pass marks all prerequisites known |
+| Placement | `placement.ts` | tests the deepest untested skill; a pass marks all prerequisites known; a miss leaves the skill new |
+| Parking | `selection.ts` | a started skill is only reviewed (or warmed up on) once its prerequisites reach compose |
 
 v0 simplifications worth knowing:
 

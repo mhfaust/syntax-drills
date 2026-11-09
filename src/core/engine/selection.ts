@@ -1,7 +1,7 @@
 import type { Performance } from '@/core/engine/fluency';
 import type { LearnerState, SkillState } from '@/core/engine/learnerState';
 import { expectedSuccess, meanRating, TARGET_SUCCESS } from '@/core/engine/rating';
-import type { ContentPack, ItemTemplate, Scaffold } from '@/core/model/content';
+import type { ContentPack, ItemTemplate, Scaffold, Skill } from '@/core/model/content';
 import type { SkillId, TemplateId } from '@/core/model/ids';
 
 export type PickReason = 'warmup' | 'retry' | 'introduce' | 'due' | 'ahead' | 'placement';
@@ -53,7 +53,9 @@ export function pickNext(
   ctx: SelectionContext,
 ): Pick | null {
   const lastSkills = new Set(ctx.items.at(-1)?.skillIds ?? []);
+  /* Started skills whose prerequisites aren't solid yet are parked until they are. */
   const learned = content.skills
+    .filter((s) => prerequisitesReady(state, s))
     .map((s) => state.skills.get(s.id)!)
     .filter((s) => s.status !== 'new');
   const byDue = [...learned].sort((a, b) => dueTime(a) - dueTime(b));
@@ -125,18 +127,24 @@ export function pickNext(
  */
 export function unlockedNewSkills(state: LearnerState, content: ContentPack): SkillState[] {
   const unlocked = content.skills
-    .filter((skill) =>
-      skill.prerequisites.every((p) => {
-        const prereq = state.skills.get(p);
-        return prereq !== undefined && prereq.status !== 'new' && prereq.scaffold === 'compose';
-      }),
-    )
+    .filter((skill) => prerequisitesReady(state, skill))
     .map((s) => state.skills.get(s.id)!)
     .filter((s) => s.status === 'new');
   return [
     ...unlocked.filter((s) => s.idiomMissedAt !== null),
     ...unlocked.filter((s) => s.idiomMissedAt === null),
   ];
+}
+
+/**
+ * True when every prerequisite has been learned to compose level. New skills unlock then,
+ * and started skills are only reviewed then.
+ */
+export function prerequisitesReady(state: LearnerState, skill: Skill): boolean {
+  return skill.prerequisites.every((p) => {
+    const prereq = state.skills.get(p);
+    return prereq !== undefined && prereq.status !== 'new' && prereq.scaffold === 'compose';
+  });
 }
 
 export function pickFor(
