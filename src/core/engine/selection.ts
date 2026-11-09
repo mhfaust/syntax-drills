@@ -1,20 +1,20 @@
 import type { Performance } from '@/core/engine/fluency';
 import type { LearnerState, SkillState } from '@/core/engine/learnerState';
 import { expectedSuccess, meanRating, TARGET_SUCCESS } from '@/core/engine/rating';
-import type { ContentPack, ItemTemplate, Scaffold, Skill } from '@/core/model/content';
+import type { ContentPack, ExerciseTemplate, Scaffold, Skill } from '@/core/model/content';
 import type { SkillId, TemplateId } from '@/core/model/ids';
 
 export type PickReason = 'warmup' | 'retry' | 'introduce' | 'due' | 'ahead' | 'placement';
 
 export type Pick = {
-  template: ItemTemplate;
+  template: ExerciseTemplate;
   scaffold: Scaffold;
   focusSkillId: SkillId;
   reason: PickReason;
 };
 
 /** What has happened so far in the current session. */
-export type SessionItem = {
+export type SessionEntry = {
   templateId: TemplateId;
   skillIds: SkillId[];
   focusSkillId: SkillId;
@@ -25,24 +25,24 @@ export type SessionItem = {
 
 export type SelectionContext = {
   now: Date;
-  items: SessionItem[];
+  entries: SessionEntry[];
   random: () => number;
 };
 
-export const WARMUP_ITEMS = 2;
+export const WARMUP_EXERCISES = 2;
 export const MAX_NEW_SKILLS_PER_SESSION = 1;
-/** A failed skill comes back after at least this many other items. */
+/** A failed skill comes back after at least this many other exercises. */
 const RETRY_GAP = 2;
 const MAX_RETRIES_PER_SKILL = 2;
-/** A new skill's copy → fill → compose ladder stops after this many items in one session. */
-const MAX_INTRO_ITEMS = 6;
+/** A new skill's copy → fill → compose ladder stops after this many exercises in one session. */
+const MAX_INTRO_EXERCISES = 6;
 /** Skills seen this recently are skipped for 'ahead' practice, to keep things mixed. */
 const AHEAD_EXCLUDE_RECENT = 3;
 
 /**
- * Chooses the next practice item. In priority order:
- *   warm-up (first items of a session, copy level, skills already learned)
- *   retry (a skill failed a couple of items ago)
+ * Chooses the next practice exercise. In priority order:
+ *   warm-up (first exercises of a session, copy level, skills already learned)
+ *   retry (a skill failed a couple of exercises ago)
  *   introduce (continue, or start, this session's new skill)
  *   due (skills whose review date has passed, most overdue first)
  *   ahead (earliest-due skill, practiced early)
@@ -52,7 +52,7 @@ export function pickNext(
   content: ContentPack,
   ctx: SelectionContext,
 ): Pick | null {
-  const lastSkills = new Set(ctx.items.at(-1)?.skillIds ?? []);
+  const lastSkills = new Set(ctx.entries.at(-1)?.skillIds ?? []);
   /* Started skills whose prerequisites aren't solid yet are parked until they are. */
   const learned = content.skills
     .filter((s) => prerequisitesReady(state, s))
@@ -60,12 +60,12 @@ export function pickNext(
     .filter((s) => s.status !== 'new');
   const byDue = [...learned].sort((a, b) => dueTime(a) - dueTime(b));
 
-  const usedTemplates = new Set(ctx.items.map((i) => i.templateId));
+  const usedTemplates = new Set(ctx.entries.map((i) => i.templateId));
   const make = (skill: SkillState, reason: PickReason, scaffold = skill.scaffold) =>
     pickFor(state, content, skill.skillId, scaffold, reason, ctx.random, { avoid: usedTemplates });
 
   /* Warm up on skills that aren't due, so the warm-up doesn't hand over a review's answer. */
-  if (ctx.items.length < WARMUP_ITEMS && ctx.items.every((i) => i.reason === 'warmup')) {
+  if (ctx.entries.length < WARMUP_EXERCISES && ctx.entries.every((i) => i.reason === 'warmup')) {
     const notDue = learned
       .filter((s) => dueTime(s) > ctx.now.getTime())
       .sort((a, b) => (a.lastPracticedAt ?? '').localeCompare(b.lastPracticedAt ?? ''));
@@ -74,14 +74,14 @@ export function pickNext(
     if (pick) return pick;
   }
 
-  const practiced = ctx.items.filter((i) => i.reason !== 'warmup');
+  const practiced = ctx.entries.filter((i) => i.reason !== 'warmup');
 
   for (const skill of learned) {
-    const items = practiced.filter((i) => i.focusSkillId === skill.skillId);
-    const last = items.at(-1);
+    const entries = practiced.filter((i) => i.focusSkillId === skill.skillId);
+    const last = entries.at(-1);
     if (!last || last.performance !== 'fail') continue;
     const gap = practiced.length - 1 - practiced.lastIndexOf(last);
-    const retries = items.filter((i) => i.reason === 'retry').length;
+    const retries = entries.filter((i) => i.reason === 'retry').length;
     if (gap >= RETRY_GAP && retries < MAX_RETRIES_PER_SKILL) {
       const pick = make(skill, 'retry');
       if (pick) return pick;
@@ -92,9 +92,9 @@ export function pickNext(
     ...new Set(practiced.filter((i) => i.reason === 'introduce').map((i) => i.focusSkillId)),
   ];
   for (const skillId of introduced) {
-    const items = practiced.filter((i) => i.focusSkillId === skillId);
-    const composedOk = items.some((i) => i.scaffold === 'compose' && i.performance !== 'fail');
-    if (!composedOk && items.length < MAX_INTRO_ITEMS) {
+    const entries = practiced.filter((i) => i.focusSkillId === skillId);
+    const composedOk = entries.some((i) => i.scaffold === 'compose' && i.performance !== 'fail');
+    if (!composedOk && entries.length < MAX_INTRO_EXERCISES) {
       const pick = make(state.skills.get(skillId)!, 'introduce');
       if (pick) return pick;
     }
@@ -179,7 +179,7 @@ function chooseTemplate(
   scaffold: Scaffold,
   random: () => number,
   options: TemplateOptions,
-): ItemTemplate | null {
+): ExerciseTemplate | null {
   const skill = state.skills.get(skillId);
   if (!skill) return null;
   const forSkill = content.templates.filter((t) => t.skillIds.includes(skillId));
@@ -204,7 +204,7 @@ function chooseTemplate(
   if (scaffold !== 'compose') {
     return candidates[Math.floor(random() * candidates.length)] ?? null;
   }
-  let best: ItemTemplate | null = null;
+  let best: ExerciseTemplate | null = null;
   let bestScore = Infinity;
   for (const template of candidates) {
     const rating = meanRating(template.skillIds.map((id) => state.skills.get(id)?.rating ?? 0));

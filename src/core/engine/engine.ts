@@ -11,7 +11,7 @@ import {
   pickNext,
   type Pick,
   type SelectionContext,
-  type SessionItem,
+  type SessionEntry,
 } from '@/core/engine/selection';
 import { buildSkillGraph, type SkillGraph } from '@/core/engine/skillGraph';
 import type { Attempt } from '@/core/model/attempt';
@@ -33,7 +33,7 @@ export type Engine = {
   pickNext(state: LearnerState, ctx: SelectionContext): Pick | null;
   pickPlacement(
     state: LearnerState,
-    ctx: { items: SessionItem[]; random: () => number },
+    ctx: { entries: SessionEntry[]; random: () => number },
   ): Pick | null;
   targetMs(state: LearnerState, scaffold: Scaffold, targetChars: number): number;
 };

@@ -1,6 +1,6 @@
 import { parse } from 'yaml';
 import { z } from 'zod';
-import type { ContentPack, ItemTemplate, Skill } from '@/core/model/content';
+import type { ContentPack, ExerciseTemplate, Skill } from '@/core/model/content';
 
 /*
  * Loads a Python content pack from YAML: one skills.yaml plus any number of template files.
@@ -70,7 +70,7 @@ export function loadPythonPack(files: ContentFile[]): ContentPack {
     prerequisites: s.requires.map(ns),
   }));
 
-  const templates: ItemTemplate[] = files
+  const templates: ExerciseTemplate[] = files
     .filter((f) => f !== skillsFile && f.path.endsWith('.yaml'))
     .sort((a, b) => a.path.localeCompare(b.path))
     .flatMap((file) => {

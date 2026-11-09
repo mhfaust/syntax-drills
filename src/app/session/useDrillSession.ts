@@ -6,10 +6,10 @@ import type { LearnerHandle } from '@/app/useLearner';
 import { SESSION_LENGTH_MS } from '@/core/engine/engine';
 import { targetMs, type Performance } from '@/core/engine/fluency';
 import type { SkillChange } from '@/core/engine/learnerState';
-import type { Pick as ItemPick, SessionItem } from '@/core/engine/selection';
+import type { Pick as ExercisePick, SessionEntry } from '@/core/engine/selection';
 import { summarizeSession, type SessionSummary } from '@/core/engine/summary';
 import type { Attempt } from '@/core/model/attempt';
-import type { ItemInstance } from '@/core/model/content';
+import type { Exercise } from '@/core/model/content';
 import type { GradeResult } from '@/core/ports/language';
 
 export type SessionMode = 'practice' | 'placement';
@@ -18,13 +18,13 @@ export const MAX_SUBMISSIONS = 3;
 /*
  * loading → working ⇄ grading → passed → (next) loading
  *                           ↘ (reveal or 3 misses) retype → (pass) loading
- * Placement skips retype. Practice ends at the first item boundary after 10 minutes.
+ * Placement skips retype. Practice ends at the first exercise boundary after 10 minutes.
  */
 export type Phase = 'loading' | 'working' | 'grading' | 'passed' | 'retype' | 'done';
 
-export type CurrentItem = {
-  pick: ItemPick;
-  instance: ItemInstance;
+export type CurrentExercise = {
+  pick: ExercisePick;
+  exercise: Exercise;
   shownAt: Date;
   timer: KeystrokeTimer;
   submissions: number;
@@ -50,7 +50,7 @@ export function useDrillSession(
 ) {
   const { engine, runtime, clock, events, learner: who, content } = useServices();
   const [phase, setPhase] = useState<Phase>('loading');
-  const [item, setItem] = useState<CurrentItem | null>(null);
+  const [current, setCurrent] = useState<CurrentExercise | null>(null);
   const [pass, setPass] = useState<PassInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => clock.now());
@@ -59,7 +59,7 @@ export function useDrillSession(
     id: ulid(),
     startedAt: clock.now(),
     started: false,
-    items: [] as SessionItem[],
+    entries: [] as SessionEntry[],
     results: [] as Result[],
     changes: [] as SkillChange[],
     lastPerformance: 'fail' as Performance,
@@ -85,7 +85,7 @@ export function useDrillSession(
       finish();
       return;
     }
-    const ctx = { items: s.items, random: Math.random };
+    const ctx = { entries: s.entries, random: Math.random };
     const pick =
       mode === 'placement' ?
         engine.pickPlacement(state, ctx)
@@ -96,10 +96,10 @@ export function useDrillSession(
     }
     try {
       const seed = Math.floor(Math.random() * 2 ** 31);
-      const instance = await runtime.instantiate(pick.template, seed, pick.scaffold);
-      setItem({
+      const exercise = await runtime.instantiate(pick.template, seed, pick.scaffold);
+      setCurrent({
         pick,
-        instance,
+        exercise,
         shownAt: clock.now(),
         timer: new KeystrokeTimer(),
         submissions: 0,
@@ -133,7 +133,7 @@ export function useDrillSession(
 
   const record = useCallback(
     async (
-      current: CurrentItem,
+      current: CurrentExercise,
       fields: Pick<
         Attempt,
         'passed' | 'revealed' | 'idiomFlags' | 'finalCode' | 'submissions' | 'errorClasses'
@@ -148,10 +148,10 @@ export function useDrillSession(
         mode: current.pick.reason === 'warmup' ? 'warmup' : mode,
         contentVersion: content.version,
         templateId: current.pick.template.id,
-        seed: current.instance.seed,
-        scaffold: current.instance.scaffold,
+        seed: current.exercise.seed,
+        scaffold: current.exercise.scaffold,
         skillIds: current.pick.template.skillIds,
-        targetChars: current.instance.targetChars,
+        targetChars: current.exercise.targetChars,
         startedAt: current.shownAt.toISOString(),
         ...current.timer.snapshot(),
         ...fields,
@@ -166,20 +166,20 @@ export function useDrillSession(
   );
 
   const next = useCallback(() => {
-    if (!item) return;
-    session.current.items.push({
-      templateId: item.pick.template.id,
-      skillIds: item.pick.template.skillIds,
-      focusSkillId: item.pick.focusSkillId,
-      scaffold: item.instance.scaffold,
-      reason: item.pick.reason,
+    if (!current) return;
+    session.current.entries.push({
+      templateId: current.pick.template.id,
+      skillIds: current.pick.template.skillIds,
+      focusSkillId: current.pick.focusSkillId,
+      scaffold: current.exercise.scaffold,
+      reason: current.pick.reason,
       performance: session.current.lastPerformance,
     });
     void loadNext();
-  }, [item, loadNext]);
+  }, [current, loadNext]);
 
   const reveal = useCallback(
-    async (current: CurrentItem, code: string) => {
+    async (current: CurrentExercise, code: string) => {
       await record(current, {
         passed: false,
         revealed: true,
@@ -189,18 +189,18 @@ export function useDrillSession(
         errorClasses: current.errorClasses,
       });
       if (mode === 'placement') {
-        session.current.items.push({
+        session.current.entries.push({
           templateId: current.pick.template.id,
           skillIds: current.pick.template.skillIds,
           focusSkillId: current.pick.focusSkillId,
-          scaffold: current.instance.scaffold,
+          scaffold: current.exercise.scaffold,
           reason: current.pick.reason,
           performance: 'fail',
         });
         void loadNext();
         return;
       }
-      setItem({ ...current, lastResult: null, editorKey: ++session.current.editorKey });
+      setCurrent({ ...current, lastResult: null, editorKey: ++session.current.editorKey });
       setPhase('retype');
     },
     [loadNext, mode, record],
@@ -208,12 +208,12 @@ export function useDrillSession(
 
   const submit = useCallback(
     async (code: string) => {
-      if (!item || (phase !== 'working' && phase !== 'retype')) return;
+      if (!current || (phase !== 'working' && phase !== 'retype')) return;
       const retyping = phase === 'retype';
       setPhase('grading');
       let result: GradeResult;
       try {
-        result = await runtime.grade(item.instance, code);
+        result = await runtime.grade(current.exercise, code);
       } catch (e) {
         setError(`Grading failed: ${String(e)}`);
         return;
@@ -222,20 +222,20 @@ export function useDrillSession(
       if (retyping) {
         if (result.outcome === 'pass') next();
         else {
-          setItem({ ...item, lastResult: result });
+          setCurrent({ ...current, lastResult: result });
           setPhase('retype');
         }
         return;
       }
 
-      const updated: CurrentItem = {
-        ...item,
-        submissions: item.submissions + 1,
+      const updated: CurrentExercise = {
+        ...current,
+        submissions: current.submissions + 1,
         errorClasses:
-          result.errorClass ? [...item.errorClasses, result.errorClass] : item.errorClasses,
+          result.errorClass ? [...current.errorClasses, result.errorClass] : current.errorClasses,
         lastResult: result,
       };
-      setItem(updated);
+      setCurrent(updated);
 
       if (result.outcome === 'pass') {
         const { attempt, performance, cps } = await record(updated, {
@@ -259,19 +259,19 @@ export function useDrillSession(
         setPhase('working');
       }
     },
-    [item, next, phase, record, reveal, runtime],
+    [current, next, phase, record, reveal, runtime],
   );
 
   return {
     phase,
-    item,
+    current,
     pass,
     error,
     elapsedMs: now.getTime() - session.current.startedAt.getTime(),
-    itemNumber: session.current.items.length + (item ? 1 : 0),
+    exerciseNumber: session.current.entries.length + (current ? 1 : 0),
     submit,
     reveal: (code: string) => {
-      if (item && phase === 'working') void reveal(item, code);
+      if (current && phase === 'working') void reveal(current, code);
     },
     next,
     end: finish,

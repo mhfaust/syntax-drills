@@ -110,7 +110,7 @@ export function applyAttempt(
   };
 
   /*
-   * Warm-ups only calibrate typing speed. A missed placement item only means "not known
+   * Warm-ups only calibrate typing speed. A missed placement exercise only means "not known
    * yet": the skill stays new, to be introduced from the start when its turn comes.
    */
   const missedPlacement = attempt.mode === 'placement' && performance === 'fail';

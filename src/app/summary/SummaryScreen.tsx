@@ -9,7 +9,7 @@ export function SummaryScreen({ summary, onDone }: { summary: SessionSummary; on
   const scored = summary.passed + summary.failed;
 
   const rows: [string, string][] = [
-    ['Exercises', `${summary.items} in ${clockTime(summary.durationMs)}`],
+    ['Exercises', `${summary.exercises} in ${clockTime(summary.durationMs)}`],
     [
       'Fluent',
       scored > 0 ?

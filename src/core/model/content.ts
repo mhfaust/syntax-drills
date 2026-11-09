@@ -1,6 +1,6 @@
 import type { LanguageId, SkillId, TemplateId } from '@/core/model/ids';
 
-/** How much help an item gives: type a shown solution, fill in blanks, or write it all. */
+/** How much help an exercise gives: type a shown solution, fill in blanks, or write it all. */
 export type Scaffold = 'copy' | 'fill' | 'compose';
 export const SCAFFOLDS: readonly Scaffold[] = ['copy', 'fill', 'compose'];
 
@@ -17,7 +17,7 @@ export type Skill = {
  * One exercise family. The core only needs its id, skills and difficulty; `spec` is the
  * language-specific body (generator, solution, checks) and is opaque here.
  */
-export type ItemTemplate = {
+export type ExerciseTemplate = {
   id: TemplateId;
   languageId: LanguageId;
   skillIds: SkillId[];
@@ -41,12 +41,12 @@ export type ContentPack = {
   version: number;
   /** In introduction order: new skills are offered from the top. */
   skills: Skill[];
-  templates: ItemTemplate[];
+  templates: ExerciseTemplate[];
   idioms: Idiom[];
 };
 
 /** A template turned into a concrete exercise with generated data, at one scaffold level. */
-export type ItemInstance = {
+export type Exercise = {
   templateId: TemplateId;
   seed: number;
   scaffold: Scaffold;

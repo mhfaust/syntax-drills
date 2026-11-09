@@ -1,5 +1,5 @@
 import type { Attempt } from '@/core/model/attempt';
-import type { ContentPack, ItemTemplate, Skill } from '@/core/model/content';
+import type { ContentPack, ExerciseTemplate, Skill } from '@/core/model/content';
 
 /*
  * A tiny content pack for engine tests:
@@ -16,7 +16,7 @@ const skill = (id: string, prerequisites: string[] = []): Skill => ({
   prerequisites: prerequisites.map((p) => `t/${p}`),
 });
 
-const template = (id: string, skills: string[], difficulty = 900): ItemTemplate => ({
+const template = (id: string, skills: string[], difficulty = 900): ExerciseTemplate => ({
   id: `t/${id}`,
   languageId: 't',
   skillIds: skills.map((s) => `t/${s}`),

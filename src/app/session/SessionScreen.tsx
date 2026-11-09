@@ -16,7 +16,7 @@ import styles from '@/app/session/session.module.css';
 import { MAX_SUBMISSIONS, useDrillSession, type SessionMode } from '@/app/session/useDrillSession';
 import type { LearnerHandle } from '@/app/useLearner';
 import { SESSION_LENGTH_MS } from '@/core/engine/engine';
-import { PLACEMENT_MAX_ITEMS } from '@/core/engine/placement';
+import { PLACEMENT_MAX_EXERCISES } from '@/core/engine/placement';
 import type { SessionSummary } from '@/core/engine/summary';
 
 type Props = {
@@ -28,23 +28,23 @@ type Props = {
 export function SessionScreen({ mode, learner, onFinish }: Props) {
   const { content } = useServices();
   const session = useDrillSession(mode, learner, onFinish);
-  const { phase, item, pass } = session;
+  const { phase, current, pass } = session;
   const code = useRef('');
   const nextButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    code.current = item?.instance.starterCode ?? '';
-  }, [item?.editorKey, item?.instance.starterCode]);
+    code.current = current?.exercise.starterCode ?? '';
+  }, [current?.editorKey, current?.exercise.starterCode]);
 
   useEffect(() => {
     if (phase === 'passed') nextButton.current?.focus();
   }, [phase]);
 
-  const skillNames = item?.pick.template.skillIds
+  const skillNames = current?.pick.template.skillIds
     .map((id) => content.skills.find((s) => s.id === id)?.name ?? id)
     .join(' + ');
   const retyping = phase === 'retype';
-  const result = item?.lastResult;
+  const result = current?.lastResult;
   const failed = result && result.outcome !== 'pass';
   const remaining = SESSION_LENGTH_MS - session.elapsedMs;
 
@@ -54,8 +54,8 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
         <span className={styles.barTitle}>{mode === 'placement' ? 'Placement' : 'Practice'}</span>
         <span className={styles.barMeta}>
           {mode === 'placement' ?
-            `${Math.min(session.itemNumber, PLACEMENT_MAX_ITEMS)} of up to ${PLACEMENT_MAX_ITEMS}`
-          : `#${session.itemNumber} · ${remaining > 0 ? `${clockTime(remaining)} left` : 'last item'}`
+            `${Math.min(session.exerciseNumber, PLACEMENT_MAX_EXERCISES)} of up to ${PLACEMENT_MAX_EXERCISES}`
+          : `#${session.exerciseNumber} · ${remaining > 0 ? `${clockTime(remaining)} left` : 'last exercise'}`
           }
         </span>
         <button
@@ -68,44 +68,44 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
 
       {session.error && <p className={styles.error}>{session.error}</p>}
 
-      {!item && !session.error && <p className={styles.loading}>Starting Python…</p>}
+      {!current && !session.error && <p className={styles.loading}>Starting Python…</p>}
 
-      {item && (
+      {current && (
         <main className={styles.card}>
           <div className={styles.tags}>
-            <span className={styles.tag}>{REASON_LABEL[item.pick.reason]}</span>
-            <span className={styles.tag}>{SCAFFOLD_LABEL[item.instance.scaffold]}</span>
+            <span className={styles.tag}>{REASON_LABEL[current.pick.reason]}</span>
+            <span className={styles.tag}>{SCAFFOLD_LABEL[current.exercise.scaffold]}</span>
             <span className={styles.skills}>{skillNames}</span>
           </div>
 
           <h1 className={styles.prompt}>
-            <Prose text={item.instance.prompt} />
+            <Prose text={current.exercise.prompt} />
           </h1>
           <p className={styles.hint}>
             {retyping ?
               'Here is one answer. Type it out to continue.'
-            : SCAFFOLD_HINT[item.instance.scaffold]}
+            : SCAFFOLD_HINT[current.exercise.scaffold]}
           </p>
 
-          {item.instance.setup && (
+          {current.exercise.setup && (
             <section className={styles.block}>
               <span className={styles.blockLabel}>Given</span>
               <CodeEditor
-                key={`setup-${item.editorKey}`}
+                key={`setup-${current.editorKey}`}
                 languageId={content.languageId}
-                initialCode={item.instance.setup}
+                initialCode={current.exercise.setup}
                 readOnly
               />
             </section>
           )}
 
-          {(item.instance.scaffold === 'copy' || retyping) && (
+          {(current.exercise.scaffold === 'copy' || retyping) && (
             <section className={`${styles.block} ${styles.reference}`}>
               <span className={styles.blockLabel}>Type this</span>
               <CodeEditor
-                key={`ref-${item.editorKey}`}
+                key={`ref-${current.editorKey}`}
                 languageId={content.languageId}
-                initialCode={item.instance.referenceCode}
+                initialCode={current.exercise.referenceCode}
                 readOnly
               />
             </section>
@@ -114,17 +114,17 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
           <section className={`${styles.block} ${styles.editor}`}>
             <span className={styles.blockLabel}>Your code</span>
             <CodeEditor
-              key={`edit-${item.editorKey}`}
+              key={`edit-${current.editorKey}`}
               languageId={content.languageId}
-              initialCode={retyping ? '' : item.instance.starterCode}
+              initialCode={retyping ? '' : current.exercise.starterCode}
               blank="___"
               placeholderText={
-                item.instance.scaffold === 'compose' && !retyping ?
+                current.exercise.scaffold === 'compose' && !retyping ?
                   'Write your code here'
                 : undefined
               }
               onChange={(c) => (code.current = c)}
-              onKey={(k) => item.timer.key(k)}
+              onKey={(k) => current.timer.key(k)}
               onSubmit={(c) => void session.submit(c)}
             />
           </section>
@@ -153,8 +153,8 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
               role="status"
             >
               <strong>
-                {item.submissions > 1 ?
-                  `Correct on try ${item.submissions}`
+                {current.submissions > 1 ?
+                  `Correct on try ${current.submissions}`
                 : PERFORMANCE_LABEL[pass.performance]}
               </strong>
               <span>
@@ -175,7 +175,7 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
                   <span className={styles.blockLabel}>Idiomatic version</span>
                   <CodeEditor
                     languageId={content.languageId}
-                    initialCode={item.instance.referenceCode}
+                    initialCode={current.exercise.referenceCode}
                     readOnly
                   />
                 </div>
@@ -200,7 +200,7 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
                 >
                   {phase === 'grading' ? 'Checking…' : 'Check'} <kbd>⌘↵</kbd>
                 </button>
-                {phase !== 'retype' && item.instance.scaffold !== 'copy' && (
+                {phase !== 'retype' && current.exercise.scaffold !== 'copy' && (
                   <button
                     disabled={phase !== 'working'}
                     onClick={() => session.reveal(code.current)}
@@ -208,9 +208,9 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
                     {mode === 'placement' ? "Skip, I don't know this" : 'Show answer'}
                   </button>
                 )}
-                {phase === 'working' && item.submissions > 0 && (
+                {phase === 'working' && current.submissions > 0 && (
                   <span className={styles.tries}>
-                    Try {item.submissions + 1} of {MAX_SUBMISSIONS}
+                    Try {current.submissions + 1} of {MAX_SUBMISSIONS}
                   </span>
                 )}
               </>

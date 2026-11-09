@@ -1,4 +1,4 @@
-import type { ItemInstance, ItemTemplate, Scaffold } from '@/core/model/content';
+import type { Exercise, ExerciseTemplate, Scaffold } from '@/core/model/content';
 import type { GradeResult, LanguageRuntime } from '@/core/ports/language';
 import type { InstantiateResult } from '@/languages/python/harness';
 import { PYTHON, type PythonTemplateSpec } from '@/languages/python/pythonContent';
@@ -37,10 +37,10 @@ export class PythonRuntime implements LanguageRuntime {
   }
 
   async instantiate(
-    template: ItemTemplate,
+    template: ExerciseTemplate,
     seed: number,
     scaffold: Scaffold,
-  ): Promise<ItemInstance> {
+  ): Promise<Exercise> {
     await this.load();
     const spec = template.spec as PythonTemplateSpec;
     const result = (await this.send(
@@ -50,11 +50,11 @@ export class PythonRuntime implements LanguageRuntime {
     return { templateId: template.id, seed, ...result };
   }
 
-  async grade(instance: ItemInstance, code: string): Promise<GradeResult> {
+  async grade(exercise: Exercise, code: string): Promise<GradeResult> {
     await this.load();
     try {
       return (await this.send(
-        { type: 'grade', payload: instance.payload, code },
+        { type: 'grade', payload: exercise.payload, code },
         GRADE_TIMEOUT_MS,
       )) as GradeResult;
     } catch (error) {

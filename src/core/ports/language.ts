@@ -1,4 +1,4 @@
-import type { ItemInstance, ItemTemplate, Scaffold } from '@/core/model/content';
+import type { Exercise, ExerciseTemplate, Scaffold } from '@/core/model/content';
 import type { LanguageId } from '@/core/model/ids';
 
 export type GradeOutcome = 'pass' | 'fail' | 'syntax-error' | 'runtime-error' | 'timeout';
@@ -18,7 +18,7 @@ export type GradeResult = {
 export interface LanguageRuntime {
   readonly languageId: LanguageId;
   load(): Promise<void>;
-  instantiate(template: ItemTemplate, seed: number, scaffold: Scaffold): Promise<ItemInstance>;
-  grade(instance: ItemInstance, code: string): Promise<GradeResult>;
+  instantiate(template: ExerciseTemplate, seed: number, scaffold: Scaffold): Promise<Exercise>;
+  grade(exercise: Exercise, code: string): Promise<GradeResult>;
   dispose(): void;
 }

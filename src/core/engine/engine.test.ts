@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createEngine, type Engine } from '@/core/engine/engine';
-import { pickFor, type SessionItem } from '@/core/engine/selection';
+import { pickFor, type SessionEntry } from '@/core/engine/selection';
 import { failed, makeAttempt, testContent } from '@/core/engine/testFixtures';
 
 let engine: Engine;
@@ -11,7 +11,7 @@ beforeAll(async () => {
 const day = (n: number) => `2026-01-0${n}T10:00:00.000Z`;
 const random = () => 0.5;
 
-const item = (focus: string, overrides: Partial<SessionItem> = {}): SessionItem => ({
+const entry = (focus: string, overrides: Partial<SessionEntry> = {}): SessionEntry => ({
   templateId: `t/${focus}-a`,
   skillIds: [`t/${focus}`],
   focusSkillId: `t/${focus}`,
@@ -106,16 +106,16 @@ describe('placement', () => {
       scaffold: 'copy',
       card: null,
     });
-    const pick = engine.pickNext(state, { now: new Date(day(2)), items: [], random });
+    const pick = engine.pickNext(state, { now: new Date(day(2)), entries: [], random });
     expect(pick).toMatchObject({ focusSkillId: 't/loop', reason: 'introduce' });
   });
 
   it('tests the deepest skill first and skips what builds on a failed skill', () => {
     const state = engine.replay([]);
-    expect(engine.pickPlacement(state, { items: [], random })?.focusSkillId).toBe('t/dictcomp');
+    expect(engine.pickPlacement(state, { entries: [], random })?.focusSkillId).toBe('t/dictcomp');
 
     const afterFail = engine.pickPlacement(state, {
-      items: [item('dictcomp', { performance: 'fail' }), item('comp', { performance: 'fail' })],
+      entries: [entry('dictcomp', { performance: 'fail' }), entry('comp', { performance: 'fail' })],
       random,
     });
     expect(afterFail?.focusSkillId).toBe('t/enum');
@@ -126,7 +126,7 @@ describe('pickNext', () => {
   const now = new Date(day(9));
 
   it('introduces the first unlocked new skill at copy for a brand-new learner', () => {
-    const pick = engine.pickNext(engine.replay([]), { now, items: [], random });
+    const pick = engine.pickNext(engine.replay([]), { now, entries: [], random });
     expect(pick).toMatchObject({ focusSkillId: 't/loop', scaffold: 'copy', reason: 'introduce' });
   });
 
@@ -135,15 +135,15 @@ describe('pickNext', () => {
       makeAttempt({ templateId: 't/fstr-a', startedAt: day(1), mode: 'placement' }),
       makeAttempt({ templateId: 't/loop-a', startedAt: day(1), ...failed }),
     ]);
-    const warmup = engine.pickNext(state, { now, items: [], random });
+    const warmup = engine.pickNext(state, { now, entries: [], random });
     /* fstr (placed, not due yet) warms up; loop (failed, due) is saved for review */
     expect(warmup).toMatchObject({ reason: 'warmup', scaffold: 'copy', focusSkillId: 't/fstr' });
 
-    const items = [
-      item('loop', { reason: 'warmup', scaffold: 'copy' }),
-      item('fstr', { reason: 'warmup', scaffold: 'copy' }),
+    const entries = [
+      entry('loop', { reason: 'warmup', scaffold: 'copy' }),
+      entry('fstr', { reason: 'warmup', scaffold: 'copy' }),
     ];
-    expect(engine.pickNext(state, { now, items, random })).toMatchObject({
+    expect(engine.pickNext(state, { now, entries, random })).toMatchObject({
       reason: 'due',
       focusSkillId: 't/loop',
     });
@@ -154,7 +154,7 @@ describe('pickNext', () => {
       makeAttempt({ templateId: 't/fstr-a', startedAt: day(8), mode: 'placement' }),
       makeAttempt({ templateId: 't/loop-a', startedAt: day(1), ...failed }),
     ]);
-    const warmup = engine.pickNext(state, { now: new Date(day(8)), items: [], random });
+    const warmup = engine.pickNext(state, { now: new Date(day(8)), entries: [], random });
     expect(warmup).toMatchObject({ reason: 'warmup', focusSkillId: 't/fstr' });
   });
 
@@ -162,9 +162,9 @@ describe('pickNext', () => {
     const state = engine.replay([
       makeAttempt({ templateId: 't/loop-a', startedAt: day(1), ...failed }),
     ]);
-    const items = [item('loop', { templateId: 't/loop-b', reason: 'warmup', scaffold: 'copy' })];
+    const entries = [entry('loop', { templateId: 't/loop-b', reason: 'warmup', scaffold: 'copy' })];
     for (let i = 0; i < 10; i++) {
-      expect(engine.pickNext(state, { now, items, random: Math.random })?.template.id).not.toBe(
+      expect(engine.pickNext(state, { now, entries, random: Math.random })?.template.id).not.toBe(
         't/loop-b',
       );
     }
@@ -182,20 +182,20 @@ describe('pickNext', () => {
     }
   });
 
-  it('brings a failed skill back after two other items', () => {
+  it('brings a failed skill back after two other exercises', () => {
     const state = engine.replay([
       makeAttempt({ templateId: 't/loop-a', mode: 'placement', startedAt: day(8) }),
       makeAttempt({ templateId: 't/fstr-a', mode: 'placement', startedAt: day(8) }),
     ]);
     const soon = new Date(day(8));
-    const failedLoop = item('loop', { performance: 'fail' });
+    const failedLoop = entry('loop', { performance: 'fail' });
     expect(
-      engine.pickNext(state, { now: soon, items: [failedLoop, item('fstr')], random })?.reason,
+      engine.pickNext(state, { now: soon, entries: [failedLoop, entry('fstr')], random })?.reason,
     ).not.toBe('retry');
     expect(
       engine.pickNext(state, {
         now: soon,
-        items: [failedLoop, item('fstr'), item('enum')],
+        entries: [failedLoop, entry('fstr'), entry('enum')],
         random,
       }),
     ).toMatchObject({ reason: 'retry', focusSkillId: 't/loop' });
@@ -207,17 +207,17 @@ describe('pickNext', () => {
     ]);
     const soon = new Date(day(8));
     const warmups = [
-      item('loop', { reason: 'warmup', scaffold: 'copy' }),
-      item('loop', { reason: 'warmup', scaffold: 'copy' }),
+      entry('loop', { reason: 'warmup', scaffold: 'copy' }),
+      entry('loop', { reason: 'warmup', scaffold: 'copy' }),
     ];
-    const first = engine.pickNext(state, { now: soon, items: warmups, random });
+    const first = engine.pickNext(state, { now: soon, entries: warmups, random });
     expect(first?.reason).toBe('introduce');
 
-    const introduced = item(first!.focusSkillId.slice(2), {
+    const introduced = entry(first!.focusSkillId.slice(2), {
       reason: 'introduce',
       scaffold: 'compose',
     });
-    const next = engine.pickNext(state, { now: soon, items: [...warmups, introduced], random });
+    const next = engine.pickNext(state, { now: soon, entries: [...warmups, introduced], random });
     expect(next?.reason).toBe('ahead');
   });
 
@@ -226,7 +226,7 @@ describe('pickNext', () => {
       makeAttempt({ templateId: 't/enum-a', mode: 'placement', startedAt: day(8) }),
     ]);
     for (let i = 0; i < 10; i++) {
-      const pick = engine.pickNext(state, { now, items: [], random: Math.random });
+      const pick = engine.pickNext(state, { now, entries: [], random: Math.random });
       expect(pick?.template.id).not.toBe('t/enum-fstr');
     }
   });
@@ -236,16 +236,16 @@ describe('pickNext', () => {
     const state = engine.replay([makeAttempt({ templateId: 't/comp-a', ...failed })]);
     expect(state.skills.get('t/comp')?.status).toBe('learning');
     for (let i = 0; i < 10; i++) {
-      const pick = engine.pickNext(state, { now, items: [], random: Math.random });
+      const pick = engine.pickNext(state, { now, entries: [], random: Math.random });
       expect(pick).toMatchObject({ focusSkillId: 't/loop', reason: 'introduce' });
     }
 
     engine.apply(state, makeAttempt({ templateId: 't/loop-a', startedAt: day(1) }));
-    const items = [
-      item('fstr', { reason: 'warmup', scaffold: 'copy' }),
-      item('fstr', { reason: 'warmup', scaffold: 'copy' }),
+    const entries = [
+      entry('fstr', { reason: 'warmup', scaffold: 'copy' }),
+      entry('fstr', { reason: 'warmup', scaffold: 'copy' }),
     ];
-    expect(engine.pickNext(state, { now, items, random })).toMatchObject({
+    expect(engine.pickNext(state, { now, entries, random })).toMatchObject({
       focusSkillId: 't/comp',
       reason: 'due',
     });

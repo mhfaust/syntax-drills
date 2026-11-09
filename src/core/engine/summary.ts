@@ -5,11 +5,11 @@ import type { SessionId, SkillId } from '@/core/model/ids';
 
 export type SessionSummary = {
   sessionId: SessionId;
-  items: number;
+  exercises: number;
   fluent: number;
   passed: number;
   failed: number;
-  /** Share of items, warm-ups excluded, that were fluent. */
+  /** Share of exercises, warm-ups excluded, that were fluent. */
   fluentRate: number;
   durationMs: number;
   /** The passed skill that took longest relative to its target time. */
@@ -54,7 +54,7 @@ export function summarizeSession(
 
   return {
     sessionId,
-    items: results.length,
+    exercises: results.length,
     fluent,
     passed: scored.length - failed,
     failed,

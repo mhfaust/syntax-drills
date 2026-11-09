@@ -30,9 +30,9 @@ export type Attempt = {
 
   /** ISO 8601, UTC. */
   startedAt: string;
-  /** Time from the item appearing to the first keystroke; null if nothing was typed. */
+  /** Time from the exercise appearing to the first keystroke; null if nothing was typed. */
   firstKeyMs: number | null;
-  /** Time from the item appearing to the passing submission, or to the reveal. */
+  /** Time from the exercise appearing to the passing submission, or to the reveal. */
   totalMs: number;
   longestPauseMs: number;
   keystrokes: number;

@@ -1,4 +1,4 @@
-/** Collects per-item typing telemetry. Created when an item appears on screen. */
+/** Collects per-exercise typing telemetry. Created when an exercise appears on screen. */
 export class KeystrokeTimer {
   private readonly startedAt = performance.now();
   private firstKeyAt: number | null = null;
