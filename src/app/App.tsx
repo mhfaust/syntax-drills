@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Nav } from '@/app/header/AppHeader';
 import { HomeScreen } from '@/app/home/HomeScreen';
 import { ReferenceScreen } from '@/app/reference/ReferenceScreen';
 import { SessionScreen } from '@/app/session/SessionScreen';
@@ -20,6 +21,11 @@ export function App() {
   const learner = useLearner();
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const home = () => setScreen({ name: 'home' });
+  const nav: Nav = {
+    home,
+    skills: () => setScreen({ name: 'skills' }),
+    reference: () => setScreen({ name: 'reference', from: 'home' }),
+  };
 
   if (!learner.state) return null;
 
@@ -28,9 +34,8 @@ export function App() {
       return (
         <HomeScreen
           learner={learner}
+          nav={nav}
           onStart={(mode) => setScreen({ name: 'session', mode })}
-          onSkills={() => setScreen({ name: 'skills' })}
-          onReference={() => setScreen({ name: 'reference', from: 'home' })}
         />
       );
     case 'session':
@@ -52,7 +57,7 @@ export function App() {
       return (
         <SkillsScreen
           learner={learner}
-          onBack={home}
+          nav={nav}
           onOverview={(skillId) => setScreen({ name: 'reference', skillId, from: 'skills' })}
         />
       );
@@ -61,6 +66,7 @@ export function App() {
         <ReferenceScreen
           learner={learner}
           skillId={screen.skillId}
+          nav={nav}
           onBack={screen.from === 'skills' ? () => setScreen({ name: 'skills' }) : home}
         />
       );

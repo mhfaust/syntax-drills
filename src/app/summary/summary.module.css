@@ -1,34 +1,147 @@
 .screen {
-  max-width: 520px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 48px 16px;
+  padding: 72px 24px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 24px;
+  gap: 32px;
 }
 
-.screen h1 {
-  margin: 0;
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 32px;
 }
+
+.ring {
+  flex: none;
+}
+
+.ringTrack,
+.ringFill {
+  fill: none;
+  stroke-width: 12;
+}
+
+.ringTrack {
+  stroke: var(--surface-raised);
+}
+
+.ringFill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+
+.ringValue,
+.ringLabel {
+  text-anchor: middle;
+  font-family: var(--font-ui);
+}
+
+.ringValue {
+  fill: var(--text);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.ringLabel {
+  fill: var(--text-muted);
+  font-size: 12px;
+}
+
+.heading {
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  font-family: var(--font-code);
+  font-size: 13px;
+  color: var(--accent-text);
+}
+
+.heading h1 {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.heading p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------- stats */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.stat strong {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat small {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.statAccent strong {
+  color: var(--accent-text);
+}
+
+/* ---------------------------------------------------------------- details */
 
 .list {
   margin: 0;
-  width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 6px 20px;
 }
 
 .row {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 16px;
+  gap: 8px 24px;
+  padding: 14px 0;
+  font-size: 14px;
 }
 
 .row + .row {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--track);
 }
 
 .row dt {
@@ -37,6 +150,52 @@
 
 .row dd {
   margin: 0;
-  text-align: right;
-  font-weight: 550;
+}
+
+.code {
+  font-family: var(--font-code);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.errorChip,
+.learningChip,
+.masteredChip {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.errorChip {
+  background: var(--danger-bg);
+  color: var(--danger-soft);
+}
+
+.learningChip,
+.masteredChip {
+  font-family: var(--font-code);
+}
+
+.learningChip {
+  background: var(--learning-bg);
+  color: var(--learning);
+}
+
+.masteredChip {
+  background: var(--mastered-bg);
+  color: var(--mastered);
+}
+
+@media (max-width: 560px) {
+  .screen {
+    padding: 40px 16px;
+  }
+
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

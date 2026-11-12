@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AppHeader, type Nav } from '@/app/header/AppHeader';
 import { STATUS_LABEL } from '@/app/labels';
 import { Markdown } from '@/app/reference/Markdown';
 import styles from '@/app/reference/reference.module.css';
@@ -10,6 +11,8 @@ type Props = {
   learner: LearnerHandle;
   /** The overview to open on; defaults to the first skill. */
   skillId?: SkillId;
+  nav: Nav;
+  /** Escape goes back to wherever the reference was opened from. */
   onBack(): void;
 };
 
@@ -17,7 +20,7 @@ type Props = {
  * Every skill's overview, one at a time. Nothing is locked: skills not started yet are
  * only shown muted, since this is a reference.
  */
-export function ReferenceScreen({ learner, skillId, onBack }: Props) {
+export function ReferenceScreen({ learner, skillId, nav, onBack }: Props) {
   const { content } = useServices();
   const skills = content.skills;
   const groups = [...new Set(skills.map((s) => s.group))];
@@ -47,103 +50,103 @@ export function ReferenceScreen({ learner, skillId, onBack }: Props) {
   const isNew = (id: SkillId) => (learner.state?.skills.get(id)?.status ?? 'new') === 'new';
 
   return (
-    <div className={styles.screen}>
-      <header className={styles.header}>
-        <button
-          className="link"
-          onClick={onBack}
-        >
-          ← Back
-        </button>
-        <h1>Reference</h1>
-        <p>One short cheat sheet per skill: the forms, a few examples, and the usual slips.</p>
-      </header>
+    <div className={styles.page}>
+      <AppHeader
+        nav={nav}
+        current="reference"
+      />
+      <div className={styles.screen}>
+        <header className={styles.header}>
+          <h1>Reference</h1>
+          <p>One short cheat sheet per skill: the forms, a few examples, and the usual slips.</p>
+        </header>
 
-      <div className={styles.layout}>
-        <nav
-          className={styles.nav}
-          aria-label="Skills"
-        >
-          <select
-            className={styles.picker}
-            aria-label="Skill"
-            value={currentId}
-            onChange={(e) => setCurrentId(e.target.value)}
+        <div className={styles.layout}>
+          <nav
+            className={styles.nav}
+            aria-label="Skills"
           >
-            {groups.map((group) => (
-              <optgroup
-                key={group}
-                label={group}
-              >
-                {ordered
-                  .filter((s) => s.group === group)
-                  .map((s) => (
-                    <option
-                      key={s.id}
-                      value={s.id}
-                    >
-                      {s.name}
-                      {isNew(s.id) ? ' (not started)' : ''}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </select>
-
-          <div className={styles.list}>
-            {groups.map((group) => (
-              <section key={group}>
-                <h2>{group}</h2>
-                <ul>
+            <select
+              className={styles.picker}
+              aria-label="Skill"
+              value={currentId}
+              onChange={(e) => setCurrentId(e.target.value)}
+            >
+              {groups.map((group) => (
+                <optgroup
+                  key={group}
+                  label={group}
+                >
                   {ordered
                     .filter((s) => s.group === group)
                     .map((s) => (
-                      <li key={s.id}>
-                        <button
-                          className={`${styles.item} ${isNew(s.id) ? styles.itemNew : ''}`}
-                          aria-current={s.id === currentId ? 'page' : undefined}
-                          title={isNew(s.id) ? 'Not started yet' : undefined}
-                          onClick={() => setCurrentId(s.id)}
-                        >
-                          {s.name}
-                        </button>
-                      </li>
+                      <option
+                        key={s.id}
+                        value={s.id}
+                      >
+                        {s.name}
+                        {isNew(s.id) ? ' (not started)' : ''}
+                      </option>
                     ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        </nav>
+                </optgroup>
+              ))}
+            </select>
 
-        <article className={styles.card}>
-          <header className={styles.cardHeader}>
-            <span className={styles.group}>{skill.group}</span>
-            <h1>{skill.name}</h1>
-            <span className={`${styles.status} ${styles[status]}`}>
-              {status === 'new' ? 'Not started yet' : STATUS_LABEL[status]}
-            </span>
-          </header>
-          {skill.overview ?
-            <Markdown
-              key={skill.id}
-              source={skill.overview}
-              languageId={content.languageId}
-            />
-          : <p className={styles.missing}>No overview yet.</p>}
+            <div className={styles.list}>
+              {groups.map((group) => (
+                <section key={group}>
+                  <h2>{group}</h2>
+                  <ul>
+                    {ordered
+                      .filter((s) => s.group === group)
+                      .map((s) => (
+                        <li key={s.id}>
+                          <button
+                            className={`${styles.item} ${isNew(s.id) ? styles.itemNew : ''}`}
+                            aria-current={s.id === currentId ? 'page' : undefined}
+                            title={isNew(s.id) ? 'Not started yet' : undefined}
+                            onClick={() => setCurrentId(s.id)}
+                          >
+                            {s.name}
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </nav>
 
-          <footer className={styles.pager}>
-            {prev ?
-              <button onClick={() => setCurrentId(prev.id)}>
-                <kbd>←</kbd> {prev.name}
-              </button>
-            : <span />}
-            {next && (
-              <button onClick={() => setCurrentId(next.id)}>
-                {next.name} <kbd>→</kbd>
-              </button>
-            )}
-          </footer>
-        </article>
+          <article className={styles.card}>
+            <header className={styles.cardHeader}>
+              <span className={styles.group}>{skill.group}</span>
+              <h1>{skill.name}</h1>
+              <span className={`${styles.status} ${styles[status]}`}>
+                {status === 'new' ? 'Not started yet' : STATUS_LABEL[status]}
+              </span>
+            </header>
+            {skill.overview ?
+              <Markdown
+                key={skill.id}
+                source={skill.overview}
+                languageId={content.languageId}
+              />
+            : <p className={styles.missing}>No overview yet.</p>}
+
+            <footer className={styles.pager}>
+              {prev ?
+                <button onClick={() => setCurrentId(prev.id)}>
+                  <kbd>←</kbd> {prev.name}
+                </button>
+              : <span />}
+              {next && (
+                <button onClick={() => setCurrentId(next.id)}>
+                  {next.name} <kbd>→</kbd>
+                </button>
+              )}
+            </footer>
+          </article>
+        </div>
       </div>
     </div>
   );

@@ -49,3 +49,16 @@ Let the learner pick a 5-, 10- or 20-minute practice session instead of the fixe
 - Tradeoffs: in 5 minutes the two warm-ups and a new skill's intro (up to 6 exercises)
   leave little time for review. In 20 minutes the due reviews may run out, and the
   session falls back to "ahead" practice, which is worth less.
+
+## Weekly activity on home
+
+The redesign mockup (canvas "Syntax Drills Redesign") has a "This week" card on home: a
+bar per day of how many exercises were done, plus streak and fluent rate. All of it can be
+derived from the attempt log (`attempts.listAll`), so no new storage is needed; it only
+needs a small summary function in `src/core/engine/` and a card on the home screen.
+
+## Per-exercise strip in a session
+
+The mockup also shows a strip of segments under the practice exercise, one per exercise
+done this session, colored by result (fluent, correct but slow, missed). The session hook
+already sees each result; it would need to keep the list and expose it to the screen.
