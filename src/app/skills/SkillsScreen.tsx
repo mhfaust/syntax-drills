@@ -4,8 +4,15 @@ import styles from '@/app/skills/skills.module.css';
 import type { LearnerHandle } from '@/app/useLearner';
 import { MASTERY } from '@/core/engine/learnerState';
 import { prerequisitesReady } from '@/core/engine/selection';
+import type { SkillId } from '@/core/model/ids';
 
-export function SkillsScreen({ learner, onBack }: { learner: LearnerHandle; onBack(): void }) {
+type Props = {
+  learner: LearnerHandle;
+  onBack(): void;
+  onOverview(skillId: SkillId): void;
+};
+
+export function SkillsScreen({ learner, onBack, onOverview }: Props) {
   const { content, clock } = useServices();
   const state = learner.state;
   if (!state) return null;
@@ -50,7 +57,12 @@ export function SkillsScreen({ learner, onBack }: { learner: LearnerHandle; onBa
                   return (
                     <tr key={skill.id}>
                       <td>
-                        <span className={styles.name}>{skill.name}</span>
+                        <button
+                          className={`link ${styles.name}`}
+                          onClick={() => onOverview(skill.id)}
+                        >
+                          {skill.name}
+                        </button>
                         <span className={styles.summary}>{skill.summary}</span>
                       </td>
                       <td>

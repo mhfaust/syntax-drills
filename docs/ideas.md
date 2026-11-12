@@ -8,30 +8,11 @@ A session lives only in memory, so closing or reloading the tab (paused or not) 
 rest of it. Recorded attempts are kept. Resuming would mean storing the session id, its
 entries and the session clock, and picking up at the next exercise.
 
-## Skill overviews (a reference section)
-
-A short write-up of the syntax for each skill, each with its own view, in a reference
-section linked from the home screen next to Skills / Export History / Import History. A
-sub-nav lists the skills so the learner can read one overview at a time. This replaces the
-earlier "explanations in prose" idea, which pointed at external docs.
-
-- Shape: cheat-sheet cards, not tutorials. The forms of the syntax, 2–4 small examples,
-  and a "common slips" list built from the error classes and style checks the harness
-  already flags. About 30 seconds to read.
-- Storage: one Markdown file per skill in the content pack, e.g.
-  `content/python/core/overviews/<skill-id>.md`.
-- Validation: `scripts/validate-content.ts` checks that every skill has an overview and
-  runs each code example through Python, so a card can't teach wrong syntax.
-- Sub-nav grouped by each skill's `group`, in `skills.yaml` order, like the Skills screen.
-- Show every skill, including ones not reached yet (maybe marked as such). It's a
-  reference, so locking it would only get in the way.
-- Once the cards exist, link to them from Skills screen rows and from the feedback after a
-  miss.
-
 ## Priming a session with overviews
 
 Show the relevant overviews before a session starts, so the learner is primed for it.
-Depends on the skill overviews above.
+Reuses the skill overview cards (`content/python/core/overviews/`, rendered by
+`src/app/reference/Markdown.tsx`).
 
 - Prime the new skill, not the review skills. Reviews only strengthen memory when the
   learner has to pull the syntax out of their own head. Reading the card a minute before a
@@ -51,8 +32,6 @@ Depends on the skill overviews above.
 - Evidence from use so far: the session that introduced string methods had 5 reveals in
   19 exercises, the most of any session. Method names are pure recall, which is where a
   primer helps most.
-- Suggested build order: overviews and the reference section first, then this priming
-  screen, which reuses the cards.
 
 ## Choosing a session length
 

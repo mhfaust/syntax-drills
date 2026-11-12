@@ -11,6 +11,8 @@ export type Skill = {
   group: string;
   summary: string;
   prerequisites: SkillId[];
+  /** A short Markdown cheat sheet for the skill, if the pack has one. */
+  overview?: string;
 };
 
 /**

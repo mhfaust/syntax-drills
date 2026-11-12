@@ -9,11 +9,12 @@ type Props = {
   learner: LearnerHandle;
   onStart(mode: 'practice' | 'placement'): void;
   onSkills(): void;
+  onReference(): void;
 };
 
 const EXPORT_FORMAT = 'syntax-drills/attempts';
 
-export function HomeScreen({ learner, onStart, onSkills }: Props) {
+export function HomeScreen({ learner, onStart, onSkills, onReference }: Props) {
   const { attempts, learner: who, clock, content } = useServices();
   const fileInput = useRef<HTMLInputElement>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -114,6 +115,12 @@ export function HomeScreen({ learner, onStart, onSkills }: Props) {
           onClick={onSkills}
         >
           Skills
+        </button>
+        <button
+          className="link"
+          onClick={onReference}
+        >
+          Reference
         </button>
         <button
           className="link"

@@ -7,11 +7,16 @@
  * generation is deterministic, nothing is left unrendered, the reference solution passes
  * its own checks without idiom flags, empty code and untouched blanks fail, and
  * single-skill templates have blanks for the fill level.
+ * Overviews: every skill has one, and every Python block in it runs. ```python blocks run
+ * top to bottom in a fresh namespace, and a top-level line ending in `# → value` must
+ * evaluate to that repr (or, for print(...), print exactly that). ```python form blocks show
+ * the shape of the syntax with placeholder names, so they are only compiled.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadPyodide } from 'pyodide';
+import { parseMarkdown } from '@/app/reference/parseMarkdown';
 import { buildSkillGraph } from '@/core/engine/skillGraph';
 import { HARNESS_MODULES, installHarness, type HarnessSources } from '@/languages/python/harness';
 import { loadPythonPack, type PythonTemplateSpec } from '@/languages/python/pythonContent';
@@ -24,7 +29,7 @@ const warnings: string[] = [];
 
 function readTree(dir: string): { path: string; text: string }[] {
   return readdirSync(dir, { withFileTypes: true, recursive: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.yaml'))
+    .filter((entry) => entry.isFile() && /\.(yaml|md)$/.test(entry.name))
     .map((entry) => {
       const file = path.join(entry.parentPath, entry.name);
       return { path: path.relative(root, file), text: readFileSync(file, 'utf8') };
@@ -58,6 +63,13 @@ for (const template of pack.templates) {
     if (!graph.byId.has(id)) errors.push(`${template.id} uses unknown skill ${id}`);
   }
 }
+for (const skill of pack.skills) {
+  if (!skill.overview?.trim()) errors.push(`${skill.id} has no overview (overviews/<id>.md)`);
+}
+const skillIds = new Set(pack.skills.map((s) => s.id.replace(/^python\//, '')));
+for (const file of readdirSync(path.join(root, 'content/python/core/overviews'))) {
+  if (!skillIds.has(file.replace(/\.md$/, ''))) errors.push(`overview ${file} has no skill`);
+}
 for (const idiom of pack.idioms) {
   if (!graph.byId.has(idiom.skillId))
     errors.push(`idiom ${idiom.flag} points at unknown skill ${idiom.skillId}`);
@@ -71,7 +83,8 @@ const sources = Object.fromEntries(
     readFileSync(path.join(root, `src/languages/python/harness/${name}.py`), 'utf8'),
   ]),
 ) as HarnessSources;
-const harness = installHarness(await loadPyodide(), sources);
+const pyodide = await loadPyodide();
+const harness = installHarness(pyodide, sources);
 
 for (const template of pack.templates) {
   const spec = template.spec as PythonTemplateSpec;
@@ -127,12 +140,73 @@ for (const template of pack.templates) {
   }
 }
 
+/* ---------------------------------------------------------------- overviews */
+
+const CHECK_EXAMPLE = String.raw`
+import ast, contextlib, io, json
+
+def check_example(source, mode):
+    if mode == "form":
+        compile(source, "<form>", "exec")
+        return "[]"
+    lines = source.split("\n")
+    tree = ast.parse(source)
+    namespace = {"__name__": "__card__"}
+    problems, checked = [], set()
+    for stmt in tree.body:
+        last = lines[stmt.end_lineno - 1]
+        expected = last.split("# → ", 1)[1].strip() if "# → " in last else None
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            if expected is not None and isinstance(stmt, ast.Expr):
+                checked.add(stmt.end_lineno)
+                value = eval(compile(ast.Expression(stmt.value), "<card>", "eval"), namespace)
+                call = stmt.value
+                printed = isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == "print"
+                actual = out.getvalue().rstrip("\n") if printed else repr(value)
+                if actual != expected:
+                    problems.append(f"line {stmt.end_lineno}: shows {expected} but gives {actual}")
+            else:
+                exec(compile(ast.Module(body=[stmt], type_ignores=[]), "<card>", "exec"), namespace)
+    for number, line in enumerate(lines, 1):
+        if "# → " in line and number not in checked:
+            problems.append(f"line {number}: '# →' is only checked after a top-level expression")
+    return json.dumps(problems)
+`;
+pyodide.runPython(CHECK_EXAMPLE);
+const checkExample = pyodide.globals.get('check_example') as (
+  source: string,
+  mode: string,
+) => string;
+
+let examples = 0;
+for (const skill of pack.skills) {
+  for (const block of parseMarkdown(skill.overview ?? '')) {
+    if (block.kind !== 'code') continue;
+    const [language, mode = 'run'] = block.info.split(/\s+/);
+    if (language !== 'python') {
+      errors.push(`${skill.id} overview: code block must be \`\`\`python or \`\`\`python form`);
+      continue;
+    }
+    examples += 1;
+    const first = block.code.split('\n')[0];
+    try {
+      const problems = JSON.parse(checkExample(block.code, mode)) as string[];
+      for (const p of problems) errors.push(`${skill.id} overview, block "${first}": ${p}`);
+    } catch (error) {
+      errors.push(
+        `${skill.id} overview, block "${first}": ${String(error).split('\n').slice(-2).join(' ')}`,
+      );
+    }
+  }
+}
+
 /* ---------------------------------------------------------------- report */
 
 for (const w of warnings) console.warn(`warning: ${w}`);
 for (const e of errors) console.error(`error: ${e}`);
 console.log(
-  `\n${pack.skills.length} skills, ${pack.templates.length} templates, ${SEEDS} seeds each: ` +
-    `${errors.length} errors, ${warnings.length} warnings`,
+  `\n${pack.skills.length} skills, ${pack.templates.length} templates, ${SEEDS} seeds each, ` +
+    `${examples} overview examples: ${errors.length} errors, ${warnings.length} warnings`,
 );
 process.exit(errors.length > 0 ? 1 : 0);

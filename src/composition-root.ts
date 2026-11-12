@@ -11,11 +11,14 @@ import { systemClock } from '@/core/ports/clock';
 import { loadPythonPack } from '@/languages/python/pythonContent';
 import { PythonRuntime } from '@/languages/python/PythonRuntime';
 
-const pythonFiles = import.meta.glob<string>('/content/python/core/**/*.yaml', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
+const pythonFiles = import.meta.glob<string>(
+  ['/content/python/core/**/*.yaml', '/content/python/core/overviews/*.md'],
+  {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  },
+);
 
 export async function createServices(): Promise<AppServices> {
   const content = loadPythonPack(

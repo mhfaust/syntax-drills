@@ -14,9 +14,9 @@ src/
     events.ts           domain events + a tiny bus
   languages/python/     Pyodide worker, Python harness (generate + grade), content loader
   adapters/             IndexedDB attempt store, local identity
-  app/                  React UI: home, session, summary, skills, editor
+  app/                  React UI: home, session, summary, skills, reference, editor
   composition-root.ts   the one place implementations are wired to ports
-content/python/core/    skills.yaml + templates/*.yaml
+content/python/core/    skills.yaml + templates/*.yaml + overviews/<skill-id>.md
 scripts/                validate-content.ts
 ```
 
@@ -80,6 +80,14 @@ Templates are YAML (`content/python/core/templates/`). Each has a seeded `genera
 read-only `setup`, an idiomatic `solution` with `<<blanks>>` for the fill level, and
 `check`s compared against the solution. `npm run validate-content` runs every template
 over 20 seeds in Node's Pyodide and fails on anything that would mislead a learner.
+
+Each skill also has an overview card (`content/python/core/overviews/<skill-id>.md`): a
+short Markdown cheat sheet with the forms, a few examples and the common slips, shown on
+the Reference screen. Cards use a small Markdown subset (headings, paragraphs, lists,
+`inline code`, **bold**, fenced code). A ` ```python ` block is an example: the validator
+runs it, and a top-level line ending in `# → value` must evaluate to that repr (or print
+exactly that). A ` ```python form ` block shows the syntax with placeholder names, so it is
+only compiled. The validator fails if a skill has no card.
 
 ## Where the future ideas plug in
 

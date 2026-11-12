@@ -53,6 +53,7 @@
 .name {
   display: block;
   font-weight: 550;
+  text-align: left;
 }
 
 .summary {

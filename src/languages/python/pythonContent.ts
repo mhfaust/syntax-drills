@@ -3,7 +3,8 @@ import { z } from 'zod';
 import type { ContentPack, ExerciseTemplate, Skill } from '@/core/model/content';
 
 /*
- * Loads a Python content pack from YAML: one skills.yaml plus any number of template files.
+ * Loads a Python content pack: one skills.yaml, any number of template YAML files, and one
+ * Markdown overview per skill at overviews/<skill-id>.md.
  * Ids in YAML are short ('enumerate'); here they get the language prefix ('python/enumerate').
  */
 
@@ -61,6 +62,12 @@ export function loadPythonPack(files: ContentFile[]): ContentPack {
   if (!skillsFile) throw new Error('Python content needs a skills.yaml');
   const meta = skillsFileSchema.parse(parse(skillsFile.text));
 
+  const overviews = new Map(
+    files
+      .filter((f) => f.path.endsWith('.md'))
+      .map((f) => [/([^/\\]+)\.md$/.exec(f.path)![1]!, f.text]),
+  );
+
   const skills: Skill[] = meta.skills.map((s) => ({
     id: ns(s.id),
     languageId: PYTHON,
@@ -68,6 +75,7 @@ export function loadPythonPack(files: ContentFile[]): ContentPack {
     group: s.group,
     summary: s.summary,
     prerequisites: s.requires.map(ns),
+    overview: overviews.get(s.id),
   }));
 
   const templates: ExerciseTemplate[] = files
