@@ -2,21 +2,11 @@
 
 Improvements to consider later. Nothing here is planned or built yet.
 
-## Pausing a session between exercises
+## Resuming a session after a reload
 
-A pause button, usable only between exercises: after a pass or a reveal, before the
-learner moves on to the next exercise.
-
-- Cheap and safe for the data: each exercise's timing starts from `shownAt`, so a pause
-  before the next exercise is shown can't affect fluency. Only the session countdown cares,
-  and it's wall-clock time from `startedAt` (`useDrillSession.ts`). Add up paused time and
-  subtract it.
-- Allow it after a reveal as well as after a pass. After a miss is when the learner is
-  most likely to want to stop and look something up.
-- Keep it off the fast path. The median gap between exercises is about 2 seconds, so pause
-  is a separate control and Enter still means Next.
-- Open question: if the tab closes or reloads while paused, can the session be resumed?
-  Probably not at first, but decide on purpose.
+A session lives only in memory, so closing or reloading the tab (paused or not) loses the
+rest of it. Recorded attempts are kept. Resuming would mean storing the session id, its
+entries and the session clock, and picking up at the next exercise.
 
 ## Skill overviews (a reference section)
 
@@ -61,8 +51,8 @@ Depends on the skill overviews above.
 - Evidence from use so far: the session that introduced string methods had 5 reveals in
   19 exercises, the most of any session. Method names are pure recall, which is where a
   primer helps most.
-- Suggested build order: pause, then overviews and the reference section, then this
-  priming screen, which reuses the cards.
+- Suggested build order: overviews and the reference section first, then this priming
+  screen, which reuses the cards.
 
 ## Choosing a session length
 

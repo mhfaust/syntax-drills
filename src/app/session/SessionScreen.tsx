@@ -28,17 +28,19 @@ type Props = {
 export function SessionScreen({ mode, learner, onFinish }: Props) {
   const { content } = useServices();
   const session = useDrillSession(mode, learner, onFinish);
-  const { phase, current, pass } = session;
+  const { phase, current, pass, paused } = session;
   const code = useRef('');
   const nextButton = useRef<HTMLButtonElement>(null);
+  const resumeButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     code.current = current?.exercise.starterCode ?? '';
   }, [current?.editorKey, current?.exercise.starterCode]);
 
   useEffect(() => {
-    if (phase === 'passed') nextButton.current?.focus();
-  }, [phase]);
+    if (paused) resumeButton.current?.focus();
+    else if (phase === 'passed') nextButton.current?.focus();
+  }, [phase, paused]);
 
   const skillNames = current?.pick.template.skillIds
     .map((id) => content.skills.find((s) => s.id === id)?.name ?? id)
@@ -55,7 +57,7 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
         <span className={styles.barMeta}>
           {mode === 'placement' ?
             `${Math.min(session.exerciseNumber, PLACEMENT_MAX_EXERCISES)} of up to ${PLACEMENT_MAX_EXERCISES}`
-          : `#${session.exerciseNumber} · ${remaining > 0 ? `${clockTime(remaining)} left` : 'last exercise'}`
+          : `#${session.exerciseNumber} · ${remaining > 0 ? `${clockTime(remaining)} left` : 'last exercise'}${paused ? ' · paused' : ''}`
           }
         </span>
         <button
@@ -70,8 +72,30 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
 
       {!current && !session.error && <p className={styles.loading}>Starting Python…</p>}
 
+      {paused && (
+        <section
+          className={styles.paused}
+          role="status"
+        >
+          <div>
+            <strong>Paused</strong>
+            <span>The session clock is stopped. The next exercise starts when you continue.</span>
+          </div>
+          <button
+            ref={resumeButton}
+            className="primary"
+            onClick={session.resume}
+          >
+            Resume <kbd>↵</kbd>
+          </button>
+        </section>
+      )}
+
       {current && (
-        <main className={styles.card}>
+        <main
+          className={`${styles.card} ${paused ? styles.cardPaused : ''}`}
+          inert={paused}
+        >
           <div className={styles.tags}>
             <span className={styles.tag}>{REASON_LABEL[current.pick.reason]}</span>
             <span className={styles.tag}>{SCAFFOLD_LABEL[current.exercise.scaffold]}</span>
@@ -215,6 +239,14 @@ export function SessionScreen({ mode, learner, onFinish }: Props) {
                 )}
               </>
             }
+            {session.canPause && (
+              <button
+                className={`link ${styles.pause}`}
+                onClick={session.pause}
+              >
+                Pause
+              </button>
+            )}
           </footer>
         </main>
       )}

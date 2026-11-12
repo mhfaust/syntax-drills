@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ulid } from 'ulid';
 import { KeystrokeTimer } from '@/app/session/keystrokeTimer';
+import { SessionClock } from '@/app/session/sessionClock';
 import { useServices } from '@/app/services';
 import type { LearnerHandle } from '@/app/useLearner';
 import { SESSION_LENGTH_MS } from '@/core/engine/engine';
@@ -19,6 +20,10 @@ export const MAX_SUBMISSIONS = 3;
  * loading → working ⇄ grading → passed → (next) loading
  *                           ↘ (reveal or 3 misses) retype → (pass) loading
  * Placement skips retype. Practice ends at the first exercise boundary after 10 minutes.
+ *
+ * Practice can be paused in `passed` and `retype`, once the attempt is recorded and before
+ * the next exercise is shown. That stops the session clock but leaves every attempt's own
+ * timing alone.
  */
 export type Phase = 'loading' | 'working' | 'grading' | 'passed' | 'retype' | 'done';
 
@@ -54,10 +59,11 @@ export function useDrillSession(
   const [pass, setPass] = useState<PassInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => clock.now());
+  const [paused, setPaused] = useState(false);
 
   const session = useRef({
     id: ulid(),
-    startedAt: clock.now(),
+    clock: new SessionClock(clock.now()),
     started: false,
     entries: [] as SessionEntry[],
     results: [] as Result[],
@@ -81,7 +87,7 @@ export function useDrillSession(
     setPhase('loading');
     setPass(null);
     const at = clock.now();
-    if (mode === 'practice' && at.getTime() - s.startedAt.getTime() >= SESSION_LENGTH_MS) {
+    if (mode === 'practice' && s.clock.elapsedMs(at) >= SESSION_LENGTH_MS) {
       finish();
       return;
     }
@@ -165,8 +171,22 @@ export function useDrillSession(
     [content.languageId, content.version, learner, mode, who.id],
   );
 
+  const canPause = mode === 'practice' && (phase === 'passed' || phase === 'retype');
+
+  const pause = useCallback(() => {
+    if (!canPause) return;
+    session.current.clock.pause(clock.now());
+    setPaused(true);
+  }, [canPause, clock]);
+
+  const resume = useCallback(() => {
+    session.current.clock.resume(clock.now());
+    setPaused(false);
+    setNow(clock.now());
+  }, [clock]);
+
   const next = useCallback(() => {
-    if (!current) return;
+    if (!current || session.current.clock.paused) return;
     session.current.entries.push({
       templateId: current.pick.template.id,
       skillIds: current.pick.template.skillIds,
@@ -208,7 +228,7 @@ export function useDrillSession(
 
   const submit = useCallback(
     async (code: string) => {
-      if (!current || (phase !== 'working' && phase !== 'retype')) return;
+      if (!current || paused || (phase !== 'working' && phase !== 'retype')) return;
       const retyping = phase === 'retype';
       setPhase('grading');
       let result: GradeResult;
@@ -259,7 +279,7 @@ export function useDrillSession(
         setPhase('working');
       }
     },
-    [current, next, phase, record, reveal, runtime],
+    [current, next, paused, phase, record, reveal, runtime],
   );
 
   return {
@@ -267,8 +287,12 @@ export function useDrillSession(
     current,
     pass,
     error,
-    elapsedMs: now.getTime() - session.current.startedAt.getTime(),
+    elapsedMs: session.current.clock.elapsedMs(now),
     exerciseNumber: session.current.entries.length + (current ? 1 : 0),
+    paused,
+    canPause: canPause && !paused,
+    pause,
+    resume,
     submit,
     reveal: (code: string) => {
       if (current && phase === 'working') void reveal(current, code);
