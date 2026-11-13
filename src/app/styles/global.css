@@ -2,7 +2,8 @@
 @import '@fontsource-variable/jetbrains-mono';
 
 /*
- * Design tokens ("Ink & Signal"). Dark by default; light via prefers-color-scheme.
+ * Design tokens ("Ink & Signal"). Dark by default; light when <html data-theme="light">,
+ * which src/app/theme.ts sets from the learner's choice or the system setting.
  * One accent, used for "go" and "fluent". Learning is blue, mastered is violet.
  */
 :root {
@@ -66,58 +67,56 @@
   --shadow: none;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
+:root[data-theme='light'] {
+  color-scheme: light;
 
-    --bg: #f5f6f8;
-    --surface: #ffffff;
-    --surface-sunken: #f7f8fa;
-    --surface-raised: #eef0f4;
-    --surface-hover: #f2f4f7;
-    --border: #e1e4ea;
-    --border-strong: #cdd2db;
-    --divider: #e6e8ed;
-    --track: #e6e8ed;
-    --text: #14161c;
-    --text-soft: #30343e;
-    --text-muted: #5c6372;
-    --text-faint: #7a8191;
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-sunken: #f7f8fa;
+  --surface-raised: #eef0f4;
+  --surface-hover: #f2f4f7;
+  --border: #e1e4ea;
+  --border-strong: #cdd2db;
+  --divider: #e6e8ed;
+  --track: #e6e8ed;
+  --text: #14161c;
+  --text-soft: #30343e;
+  --text-muted: #5c6372;
+  --text-faint: #7a8191;
 
-    --accent: #c5f04a;
-    --accent-ink: #14161c;
-    --accent-text: #4b7300;
-    --accent-soft: rgb(120 170 0 / 0.08);
-    --accent-line: rgb(100 150 0 / 0.3);
+  --accent: #c5f04a;
+  --accent-ink: #14161c;
+  --accent-text: #4b7300;
+  --accent-soft: rgb(120 170 0 / 0.08);
+  --accent-line: rgb(100 150 0 / 0.3);
 
-    --learning: #1f6fb8;
-    --learning-bg: rgb(31 111 184 / 0.1);
-    --mastered: #7142c9;
-    --mastered-bg: rgb(113 66 201 / 0.1);
-    --danger: #b4332c;
-    --danger-soft: #9e2a24;
-    --danger-bg: rgb(180 51 44 / 0.06);
-    --danger-line: rgb(180 51 44 / 0.3);
-    --warning: #8a5a00;
-    --warning-bg: rgb(200 140 0 / 0.08);
-    --warning-line: rgb(170 120 0 / 0.3);
+  --learning: #1f6fb8;
+  --learning-bg: rgb(31 111 184 / 0.1);
+  --mastered: #7142c9;
+  --mastered-bg: rgb(113 66 201 / 0.1);
+  --danger: #b4332c;
+  --danger-soft: #9e2a24;
+  --danger-bg: rgb(180 51 44 / 0.06);
+  --danger-line: rgb(180 51 44 / 0.3);
+  --warning: #8a5a00;
+  --warning-bg: rgb(200 140 0 / 0.08);
+  --warning-line: rgb(170 120 0 / 0.3);
 
-    --code-gutter: #a3a9b6;
-    --code-cursor: #4b7300;
-    --code-selection: #dbe6c2;
-    --syn-keyword: #7142c9;
-    --syn-string: #9a5b00;
-    --syn-number: #b54708;
-    --syn-comment: #7a8191;
-    --syn-function: #1f6fb8;
-    --syn-definition: #14161c;
-    --syn-operator: #5c6372;
-    --syn-constant: #b4332c;
-    --syn-type: #0f7480;
-    --inline-code: #9a5b00;
+  --code-gutter: #a3a9b6;
+  --code-cursor: #4b7300;
+  --code-selection: #dbe6c2;
+  --syn-keyword: #7142c9;
+  --syn-string: #9a5b00;
+  --syn-number: #b54708;
+  --syn-comment: #7a8191;
+  --syn-function: #1f6fb8;
+  --syn-definition: #14161c;
+  --syn-operator: #5c6372;
+  --syn-constant: #b4332c;
+  --syn-type: #0f7480;
+  --inline-code: #9a5b00;
 
-    --shadow: 0 1px 2px rgb(20 22 28 / 0.04), 0 4px 16px rgb(20 22 28 / 0.04);
-  }
+  --shadow: 0 1px 2px rgb(20 22 28 / 0.04), 0 4px 16px rgb(20 22 28 / 0.04);
 }
 
 *,

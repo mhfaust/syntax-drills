@@ -70,6 +70,14 @@
   color: var(--text);
 }
 
+.themeButton {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: var(--radius-small);
+  color: var(--text-soft);
+}
+
 @media (max-width: 560px) {
   .inner {
     padding: 10px 16px;

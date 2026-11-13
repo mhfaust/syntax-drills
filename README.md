@@ -4,6 +4,21 @@ Adaptive, keyboard-first drills for getting a language's syntax into your finger
 Short, literal exercises ("map these months to their totals"), timed, with no autocomplete.
 Python first.
 
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshot-home-dark-2.png" alt="Syntax Drills home screen in dark mode: a 'Start a 10-minute session' button, an 'Up for review' list of skills with their level and when each is due, and counts of skills due, learning, mastered and not started">
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshot-session-done-dark.png" alt="Session summary in dark mode: 20 exercises in 10:18, 15 of 18 correct and 7 of 18 fluent, with the slowest skill, the most common error and the skill started this session">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Home: what's due for review, and where every skill stands</sub></td>
+    <td align="center"><sub>After a session: accuracy, fluency and what to work on</sub></td>
+  </tr>
+</table>
+
 ## Run it
 
 ```bash

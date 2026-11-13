@@ -3,7 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { App } from '@/app/App';
 import { ServicesProvider } from '@/app/services';
 import '@/app/styles/global.css';
+import { startTheme } from '@/app/theme';
 import { createServices } from '@/composition-root';
+
+startTheme();
 
 const root = createRoot(document.getElementById('root')!);
 
